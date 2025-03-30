@@ -1,0 +1,1329 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório Operacional de Turno - Via Livre</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 30px;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+        }
+        .report-container {
+            max-width: 1000px;
+            width: 100%;
+            background-color: #ffffff;
+            padding: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+        }
+        h2 {
+            text-align: center;
+            color: #1a3c34;
+            margin-bottom: 30px;
+            font-size: 28px;
+            font-weight: 600;
+            text-transform: uppercase;
+            background-color: #e8f5e9;
+            padding: 10px;
+            border-radius: 6px;
+            border-bottom: 3px solid #4CAF50;
+        }
+        h3 {
+            color: #2e5e56;
+            margin: 30px 0 20px;
+            font-size: 20px;
+            font-weight: 500;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 5px;
+        }
+        label {
+            font-weight: 600;
+            display: block;
+            margin-top: 20px;
+            color: #333;
+            font-size: 16px;
+        }
+        label.required::after {
+            content: " *";
+            color: #d32f2f;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            border: 1px solid #d0d0d0;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 15px;
+            background-color: #fafafa;
+            transition: border-color 0.3s;
+            text-transform: uppercase;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: #4CAF50;
+            outline: none;
+            background-color: #fff;
+        }
+        input:invalid:not(:focus), select:invalid:not(:focus) {
+            border-color: #d32f2f;
+        }
+        input[readonly] {
+            background-color: #e0e0e0;
+            cursor: not-allowed;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        button {
+            padding: 12px 25px;
+            margin: 20px 10px 0 0;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+    <style>
+        .container {
+            border: 1px solid #e5e5e5;
+            padding: 20px;
+            margin-top: 20px;
+            background-color: #f9f9f9;
+            border-radius: 6px;
+        }
+        .postos-fixos, .equipe-volante, .missao, .supervisao {
+            border: 1px solid #e0e0e0;
+            padding: 20px;
+            margin-top: 20px;
+            background-color: #fff;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            animation: fadeIn 0.3s;
+        }
+        .outra-regiao {
+            display: none;
+            margin-top: 8px;
+        }
+        .error-message {
+            color: #d32f2f;
+            font-size: 14px;
+            margin-top: 15px;
+            display: none;
+            font-weight: 500;
+        }
+        .section {
+            padding: 20px;
+            background-color: #fefefe;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #ececec;
+        }
+        .row {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .row div {
+            flex: 1;
+            min-width: 200px;
+        }
+        .item-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 15px;
+            animation: fadeIn 0.3s;
+        }
+        .item-container input, .item-container select {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+        }
+        .btnRemover {
+            background-color: #d32f2f;
+            padding: 8px 12px;
+            font-size: 14px;
+            width: auto;
+            align-self: flex-start;
+        }
+        .btnRemover:hover {
+            background-color: #b71c1c;
+        }
+        #editRegioesContainer, #editOperadoresContainer {
+            display: none;
+            padding: 15px;
+            background-color: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+        #editRegioesList, #editOperadoresList {
+            list-style: none;
+            padding: 0;
+        }
+        #editRegioesList li, #editOperadoresList li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 10px;
+        }
+        #editRegioesList li input, #editOperadoresList li input {
+            flex: 1;
+            min-width: 150px;
+            max-width: 100%;
+            padding: 8px;
+            font-size: 14px;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @media (max-width: 600px) {
+            .row div { min-width: 100%; }
+            button { width: 100%; margin: 10px 0; padding: 10px; font-size: 14px; }
+            .report-container { padding: 15px; }
+            .item-container input, .item-container select { padding: 12px; font-size: 14px; }
+            .btnRemover { padding: 6px 10px; font-size: 12px; }
+            .postos-fixos, .equipe-volante, .missao, .supervisao { padding: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="report-container">
+        <h2>RELATÓRIO OPERACIONAL DE TURNO - VIA LIVRE</h2>
+
+        <div class="section">
+            <div class="row">
+                <div>
+                    <label for="data" class="required">Data:</label>
+                    <input type="date" id="data" required>
+                </div>
+                <div>
+                    <label for="turno" class="required">Turno:</label>
+                    <select id="turno" required>
+                        <option value="">Selecione o turno</option>
+                        <option value="MADRUGADA">Madrugada</option>
+                        <option value="MANHÃ">Manhã</option>
+                        <option value="TARDE">Tarde</option>
+                        <option value="NOITE">Noite</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row">
+                <div>
+                    <label for="supervisor" class="required">Supervisor (Nome e Telefone):</label>
+                    <input type="text" id="supervisor" placeholder="Digite o nome e telefone do supervisor" required>
+                </div>
+                <div>
+                    <label for="totalOperadores" class="required">Total de Operadores:</label>
+                    <input type="number" id="totalOperadores" min="0" readonly>
+                </div>
+            </div>
+            <div class="row">
+                <div>
+                    <label for="internos">Internos:</label>
+                    <input type="number" id="internos" min="0" readonly>
+                </div>
+                <div>
+                    <label for="externos">Externos:</label>
+                    <input type="number" id="externos" min="0" readonly>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>Divisão das Operações</h3>
+            <label for="central">01. Central:</label>
+            <input type="text" id="central" placeholder="Digite os nomes dos operadores" list="operadoresList">
+            <datalist id="operadoresList"></datalist>
+            <label>02. Postos Fixos:</label>
+            <div id="postosFixosContainer" class="container"></div>
+            <button id="btnPostosFixos"><i class="fas fa-plus"></i> Adicionar Posto Fixo</button>
+            <button id="btnEditarRegioes"><i class="fas fa-edit"></i> Editar Regiões</button>
+            <button id="btnEditarOperadores"><i class="fas fa-users"></i> Editar Operadores</button>
+            <div id="editRegioesContainer">
+                <ul id="editRegioesList"></ul>
+                <button id="btnAdicionarNovaRegiao"><i class="fas fa-plus"></i> Nova Região</button>
+                <button id="btnSalvarRegioes"><i class="fas fa-save"></i> Salvar Regiões</button>
+            </div>
+            <div id="editOperadoresContainer">
+                <ul id="editOperadoresList"></ul>
+                <button id="btnAdicionarNovoOperador"><i class="fas fa-plus"></i> Novo Operador</button>
+                <button id="btnSalvarOperadores"><i class="fas fa-save"></i> Salvar Operadores</button>
+            </div>
+            <label>03. Equipe Volante:</label>
+            <div id="equipeVolanteContainer" class="container"></div>
+            <button id="btnEquipeVolante"><i class="fas fa-plus"></i> Adicionar Equipe Volante</button>
+
+            <label>04. Missão ou Evento:</label>
+            <div id="missaoContainer" class="container"></div>
+            <button id="btnMissao"><i class="fas fa-plus"></i> Adicionar Missão/Evento</button>
+
+            <label>05. Supervisão:</label>
+            <div id="supervisaoContainer" class="container"></div>
+            <button id="btnAdicionarSupervisao"><i class="fas fa-plus"></i> Adicionar Supervisão</button>
+
+            <label for="observacoes">06. Observações:</label>
+            <textarea id="observacoes" rows="3" placeholder="Digite observações gerais"></textarea>
+
+            <div id="errorMessage" class="error-message">Por favor, preencha todos os campos obrigatórios marcados com *.</div>
+            <button id="btnSalvarRascunho"><i class="fas fa-save"></i> Salvar Rascunho</button>
+            <button id="btnCarregarRascunho"><i class="fas fa-folder-open"></i> Carregar Rascunho</button>
+            <button id="btnPreVisualizar"><i class="fas fa-eye"></i> Pré-visualizar</button>
+            <button id="gerarPdfBtn"><i class="fas fa-file-pdf"></i> Gerar PDF</button>
+            <button id="gerarExcelBtn"><i class="fas fa-file-excel"></i> Exportar para Excel</button>
+        </div>
+    </div>
+    <script>
+        // Variáveis globais
+        let regioes = JSON.parse(localStorage.getItem("regioesPersonalizadas")) || [
+            "ALDEOTA", "CENTRO", "CIDADE DOS FUNCIONÁRIOS", "MARAPONGA", "PAPICU", "PARANGABA"
+        ].sort((a, b) => a.localeCompare(b));
+        const viaturas = Array.from({ length: 101 }, (_, i) => `VT-${150 + i}`);
+        const motos = Array.from({ length: 77 }, (_, i) => `MT-${174 + i}`);
+        let operadores = JSON.parse(localStorage.getItem("operadoresPersonalizados")) || [
+            "ACÁCIO", "ADAMS", "ANCHIETA DA SILVA", "BACELAR", "BRUNO", "BRUNO ALBUQUERQUE", "CALACIO",
+            "CARLOS ALBERTO", "CARLOS ALEX", "CARLOS EDUARDO", "CRISTIANO", "DANRLEI", "DAVID", "DELUCAS",
+            "DENIS", "EDILBERTO", "ELIZIÁRIO", "EMANUEL PINHEIRO", "EMERSON", "ERICK", "FABRÍCIO", "FELIPE",
+            "FRANCISCO", "FRANCISCO THIAGO", "GABRIEL RIBEIRO", "GENILSON", "GOMES", "HUDSON", "ITALO",
+            "JAIRO", "JOAN", "JOÃO LUCAS", "JOÃO PAULO", "JORGE LUIS", "JOSÉ AIRTON", "JOSÉ ARY",
+            "JOSÉ MOREIRA", "JOSE RONALDO", "JULIO CESAR", "LEONI", "LUCAS CAVALCANTE", "MAIA", "MAICON",
+            "MÁRCIO", "MARCELO ARAÚJO", "MARLON", "MIGUEL", "MIZAEL", "NEGREIROS", "NEIRTON", "NONATO",
+            "ONILDO", "PAULO SÉRGIO", "PAULO TELES", "PEDRO LESSA", "PEDRO MARQUES", "ROBSON", "RONALDO",
+            "SALES", "SANTANA", "SIDNEY", "THAYANNE", "THIAGO CÉSAR", "THIAGO NOGUEIRA", "UIRAQUÊ",
+            "WESLEY SILVA", "ZAMISK"
+        ].sort((a, b) => a.localeCompare(b));
+
+        // Função para contar operadores
+        function contarOperadores(texto) {
+            if (!texto.trim()) return 0;
+            const textoMaiusculo = texto.toUpperCase();
+            const nomes = textoMaiusculo.split(',')
+                .map(nome => nome.trim())
+                .filter(nome => nome.match(/^[A-ZÀ-Ú\s.-]+$/));
+            console.log(`Contando operadores em: "${textoMaiusculo}" -> ${nomes.length} operadores`);
+            return nomes.length;
+        }
+
+        // Função para atualizar a contagem de operadores
+        function atualizarContagem() {
+            let internos = 0;
+            let externos = 0;
+
+            internos += contarOperadores(document.getElementById("central").value);
+            console.log(`Internos: ${internos}`);
+
+            const containersExternos = ["postosFixosContainer", "equipeVolanteContainer", "missaoContainer", "supervisaoContainer"];
+            containersExternos.forEach(containerId => {
+                const container = document.getElementById(containerId);
+                const operadoresInputs = container.querySelectorAll('input[placeholder="Digite os nomes dos operadores"]');
+                console.log(`Container ${containerId} tem ${operadoresInputs.length} inputs de operadores`);
+                operadoresInputs.forEach(input => {
+                    const count = contarOperadores(input.value);
+                    externos += count;
+                    console.log(`Input em ${containerId}: "${input.value}" -> ${count} operadores`);
+                });
+            });
+
+            console.log(`Externos: ${externos}`);
+            document.getElementById("internos").value = internos;
+            document.getElementById("externos").value = externos;
+            document.getElementById("totalOperadores").value = internos + externos;
+        }
+        // Funções auxiliares
+        function verificarOutrasRegioes(select, campoOutros) {
+            campoOutros.style.display = select.value === "OUTROS" ? "block" : "none";
+        }
+
+        function formatarData(data) {
+            const [ano, mes, dia] = data.split('-');
+            return `${dia}/${mes}/${ano}`;
+        }
+
+        // Funções para criar elementos dinâmicos
+        function criarDivViaturaOuMotoPostosFixos() {
+            const div = document.createElement("div");
+            div.className = "item-container";
+            div.innerHTML = `
+                <select class="seletor-tipo">
+                    <option value="">Selecione o tipo</option>
+                    <option value="VIATURA">Viatura</option>
+                    <option value="MOTOCICLETA">Motocicleta</option>
+                    <option value="EQUIPE FIXA">Equipe Fixa</option>
+                </select>
+                <input type="text" class="seletor-veiculo" placeholder="Digite o prefixo (ex: VT-150)" list="prefixos" style="display: none;">
+                <datalist id="prefixos">
+                    ${viaturas.map(v => `<option value="${v}">`).join("")}
+                    ${motos.map(m => `<option value="${m}">`).join("")}
+                </datalist>
+                <input type="text" placeholder="Digite os nomes dos operadores" list="operadoresList">
+                <input type="text" placeholder="Digite o Posto Fixo">
+                <select class="seletor-rendicao">
+                    <option value="NÃO">Rendição? Não</option>
+                    <option value="SIM">Rendição? Sim</option>
+                </select>
+                <button class="btnRemover"><i class="fas fa-trash"></i></button>
+            `;
+            const seletorTipo = div.querySelector(".seletor-tipo");
+            const seletorVeiculo = div.querySelector(".seletor-veiculo");
+            const inputOperadores = div.querySelector("input[placeholder='Digite os nomes dos operadores']");
+            seletorTipo.addEventListener("change", () => {
+                seletorVeiculo.style.display = seletorTipo.value === "EQUIPE FIXA" ? "none" : "block";
+            });
+            inputOperadores.addEventListener("input", atualizarContagem);
+            div.querySelector(".btnRemover").addEventListener("click", () => {
+                div.remove();
+                atualizarContagem();
+            });
+            return div;
+        }
+
+        function criarDivEquipeVolante() {
+            const div = document.createElement("div");
+            div.className = "item-container";
+            div.innerHTML = `
+                <select class="seletor-tipo">
+                    <option value="">Selecione o tipo</option>
+                    <option value="VIATURA">Viatura</option>
+                    <option value="MOTOCICLETA">Motocicleta</option>
+                </select>
+                <input type="text" class="seletor-veiculo" placeholder="Digite o prefixo (ex: VT-150)" list="prefixos">
+                <datalist id="prefixos">
+                    ${viaturas.map(v => `<option value="${v}">`).join("")}
+                    ${motos.map(m => `<option value="${m}">`).join("")}
+                </datalist>
+                <input type="text" placeholder="Digite os nomes dos operadores" list="operadoresList">
+                <input type="text" placeholder="Digite o Posto Base">
+                <button class="btnRemover"><i class="fas fa-trash"></i></button>
+            `;
+            const inputOperadores = div.querySelector("input[placeholder='Digite os nomes dos operadores']");
+            inputOperadores.addEventListener("input", atualizarContagem);
+            div.querySelector(".btnRemover").addEventListener("click", () => {
+                div.remove();
+                atualizarContagem();
+            });
+            return div;
+        }
+
+        function criarDivMissao() {
+            const div = document.createElement("div");
+            div.className = "item-container";
+            div.innerHTML = `
+                <select class="seletor-tipo">
+                    <option value="">Selecione o tipo</option>
+                    <option value="VIATURA">Viatura</option>
+                    <option value="MOTOCICLETA">Motocicleta</option>
+                    <option value="EQUIPE FIXA">Equipe Fixa</option>
+                </select>
+                <input type="text" class="seletor-veiculo" placeholder="Digite o prefixo (ex: VT-150)" list="prefixos" style="display: none;">
+                <datalist id="prefixos">
+                    ${viaturas.map(v => `<option value="${v}">`).join("")}
+                    ${motos.map(m => `<option value="${m}">`).join("")}
+                </datalist>
+                <input type="text" placeholder="Digite os nomes dos operadores" list="operadoresList">
+                <input type="text" placeholder="Digite o Posto Base">
+                <select class="seletor-rendicao">
+                    <option value="NÃO">Rendição? Não</option>
+                    <option value="SIM">Rendição? Sim</option>
+                </select>
+                <button class="btnRemover"><i class="fas fa-trash"></i></button>
+            `;
+            const seletorTipo = div.querySelector(".seletor-tipo");
+            const seletorVeiculo = div.querySelector(".seletor-veiculo");
+            const inputOperadores = div.querySelector("input[placeholder='Digite os nomes dos operadores']");
+            seletorTipo.addEventListener("change", () => {
+                seletorVeiculo.style.display = seletorTipo.value === "EQUIPE FIXA" ? "none" : "block";
+            });
+            inputOperadores.addEventListener("input", atualizarContagem);
+            div.querySelector(".btnRemover").addEventListener("click", () => {
+                div.remove();
+                atualizarContagem();
+            });
+            return div;
+        }
+
+        function criarDivSupervisao() {
+            const div = document.createElement("div");
+            div.className = "item-container";
+            div.innerHTML = `
+                <input type="text" class="seletor-regiao" placeholder="Digite a região">
+                <input type="text" class="seletor-veiculo" placeholder="Digite o prefixo (ex: VT-150)" list="prefixos">
+                <datalist id="prefixos">
+                    ${viaturas.map(v => `<option value="${v}">`).join("")}
+                    ${motos.map(m => `<option value="${m}">`).join("")}
+                </datalist>
+                <input type="text" placeholder="Digite os nomes dos operadores" list="operadoresList">
+                <button class="btnRemover"><i class="fas fa-trash"></i></button>
+            `;
+            const inputOperadores = div.querySelector("input[placeholder='Digite os nomes dos operadores']");
+            inputOperadores.addEventListener("input", atualizarContagem);
+            div.querySelector(".btnRemover").addEventListener("click", () => {
+                div.remove();
+                atualizarContagem();
+            });
+            return div;
+        }
+        function adicionarPostoFixo() {
+            const container = document.getElementById("postosFixosContainer");
+            const postoDiv = document.createElement("div");
+            postoDiv.className = "postos-fixos";
+            postoDiv.innerHTML = `
+                <select class="seletor-regiao">${regioes.map(r => `<option>${r}</option>`).join("")}<option value="OUTROS">OUTROS</option></select>
+                <input type="text" class="outra-regiao" placeholder="Digite a região personalizada">
+                <div class="viaturasContainer"></div>
+                <button class="btnAdicionarViaturaPostoFixo"><i class="fas fa-plus"></i> Adicionar Viatura/Moto/Equipe</button>
+                <button class="btnRemover"><i class="fas fa-trash"></i></button>
+            `;
+            const seletorRegiao = postoDiv.querySelector(".seletor-regiao");
+            const campoOutros = postoDiv.querySelector(".outra-regiao");
+            seletorRegiao.addEventListener("change", () => verificarOutrasRegioes(seletorRegiao, campoOutros));
+            postoDiv.querySelector(".btnAdicionarViaturaPostoFixo").addEventListener("click", function() {
+                const div = criarDivViaturaOuMotoPostosFixos();
+                this.previousElementSibling.appendChild(div);
+            });
+            postoDiv.querySelector(".btnRemover").addEventListener("click", () => {
+                postoDiv.remove();
+                atualizarContagem();
+            });
+            container.appendChild(postoDiv);
+            atualizarContagem();
+        }
+
+        function adicionarEquipeVolante() {
+            const container = document.getElementById("equipeVolanteContainer");
+            const equipeDiv = document.createElement("div");
+            equipeDiv.className = "equipe-volante";
+            equipeDiv.innerHTML = `
+                <select class="seletor-regiao">${regioes.map(r => `<option>${r}</option>`).join("")}<option value="OUTROS">OUTROS</option></select>
+                <input type="text" class="outra-regiao" placeholder="Digite a região personalizada">
+                <div class="viaturasContainer"></div>
+                <button class="btnAdicionarViaturaEquipeVolante"><i class="fas fa-plus"></i> Adicionar Viatura/Moto</button>
+                <button class="btnRemover"><i class="fas fa-trash"></i></button>
+            `;
+            const seletorRegiao = equipeDiv.querySelector(".seletor-regiao");
+            const campoOutros = equipeDiv.querySelector(".outra-regiao");
+            seletorRegiao.addEventListener("change", () => verificarOutrasRegioes(seletorRegiao, campoOutros));
+            equipeDiv.querySelector(".btnAdicionarViaturaEquipeVolante").addEventListener("click", function() {
+                const div = criarDivEquipeVolante();
+                this.previousElementSibling.appendChild(div);
+            });
+            equipeDiv.querySelector(".btnRemover").addEventListener("click", () => {
+                equipeDiv.remove();
+                atualizarContagem();
+            });
+            container.appendChild(equipeDiv);
+            atualizarContagem();
+        }
+
+        function adicionarMissao() {
+            const container = document.getElementById("missaoContainer");
+            const missaoDiv = document.createElement("div");
+            missaoDiv.className = "missao";
+            missaoDiv.innerHTML = `
+                <input type="text" placeholder="Digite missão ou evento" required>
+                <input type="text" placeholder="Digite o local" required>
+                <div class="viaturasContainer"></div>
+                <button class="btnAdicionarViaturaMissao"><i class="fas fa-plus"></i> Adicionar Viatura/Moto/Equipe</button>
+                <button class="btnRemover"><i class="fas fa-trash"></i></button>
+            `;
+            missaoDiv.querySelector(".btnAdicionarViaturaMissao").addEventListener("click", function() {
+                const div = criarDivMissao();
+                this.previousElementSibling.appendChild(div);
+            });
+            missaoDiv.querySelector(".btnRemover").addEventListener("click", () => {
+                missaoDiv.remove();
+                atualizarContagem();
+            });
+            container.appendChild(missaoDiv);
+            atualizarContagem();
+        }
+
+        function adicionarSupervisao() {
+            const container = document.getElementById("supervisaoContainer");
+            const div = criarDivSupervisao();
+            container.appendChild(div);
+            atualizarContagem();
+        }
+
+        function atualizarRegioes() {
+            const regioesSelects = document.querySelectorAll(".seletor-regiao");
+            regioesSelects.forEach(select => {
+                const valorAtual = select.value;
+                select.innerHTML = regioes.map(r => `<option>${r}</option>`).join("") + `<option value="OUTROS">OUTROS</option>`;
+                select.value = regioes.includes(valorAtual) || valorAtual === "OUTROS" ? valorAtual : "";
+            });
+        }
+
+        function atualizarOperadores() {
+            const operadoresDatalist = document.getElementById("operadoresList");
+            operadoresDatalist.innerHTML = operadores.map(o => `<option value="${o}">`).join("");
+            // Atualiza todos os campos de operadores para refletir a lista
+            document.querySelectorAll('input[list="operadoresList"]').forEach(input => {
+                input.dataset.currentList = operadores.join(",");
+            });
+        }
+
+        function mostrarEditarRegioes() {
+            const container = document.getElementById("editRegioesContainer");
+            const lista = document.getElementById("editRegioesList");
+            lista.innerHTML = "";
+            regioes.forEach(regiao => {
+                const li = document.createElement("li");
+                li.innerHTML = `
+                    <input type="text" class="edit-regiao-input" value="${regiao}">
+                    <button class="btnRemover" onclick="this.parentNode.remove()"><i class="fas fa-trash"></i></button>
+                `;
+                lista.appendChild(li);
+            });
+            container.style.display = "block";
+        }
+
+        function mostrarEditarOperadores() {
+            const container = document.getElementById("editOperadoresContainer");
+            const lista = document.getElementById("editOperadoresList");
+            lista.innerHTML = "";
+            operadores.forEach(operador => {
+                const li = document.createElement("li");
+                li.innerHTML = `
+                    <input type="text" class="edit-operador-input" value="${operador}">
+                    <button class="btnRemover" onclick="this.parentNode.remove()"><i class="fas fa-trash"></i></button>
+                `;
+                lista.appendChild(li);
+            });
+            container.style.display = "block";
+        }
+
+        function adicionarNovaRegiao() {
+            const lista = document.getElementById("editRegioesList");
+            const li = document.createElement("li");
+            li.innerHTML = `
+                <input type="text" class="edit-regiao-input" placeholder="Nova região">
+                <button class="btnRemover" onclick="this.parentNode.remove()"><i class="fas fa-trash"></i></button>
+            `;
+            lista.appendChild(li);
+        }
+
+        function adicionarNovoOperador() {
+            const lista = document.getElementById("editOperadoresList");
+            const li = document.createElement("li");
+            li.innerHTML = `
+                <input type="text" class="edit-operador-input" placeholder="Novo operador">
+                <button class="btnRemover" onclick="this.parentNode.remove()"><i class="fas fa-trash"></i></button>
+            `;
+            lista.appendChild(li);
+        }
+
+        function salvarRegioes() {
+            const lista = document.getElementById("editRegioesList");
+            regioes = Array.from(lista.querySelectorAll("input"))
+                .map(input => input.value.trim().toUpperCase())
+                .filter(r => r)
+                .sort((a, b) => a.localeCompare(b));
+            localStorage.setItem("regioesPersonalizadas", JSON.stringify(regioes));
+            atualizarRegioes();
+            document.getElementById("editRegioesContainer").style.display = "none";
+            alert("Regiões salvas com sucesso!");
+        }
+
+        function salvarOperadores() {
+            const lista = document.getElementById("editOperadoresList");
+            operadores = Array.from(lista.querySelectorAll("input"))
+                .map(input => input.value.trim().toUpperCase())
+                .filter(o => o)
+                .sort((a, b) => a.localeCompare(b));
+            localStorage.setItem("operadoresPersonalizados", JSON.stringify(operadores));
+            atualizarOperadores();
+            document.getElementById("editOperadoresContainer").style.display = "none";
+            alert("Operadores salvos com sucesso!");
+        }
+        // Configuração dos eventos
+        document.addEventListener("DOMContentLoaded", function() {
+            document.getElementById("btnPostosFixos").addEventListener("click", adicionarPostoFixo);
+            document.getElementById("btnEditarRegioes").addEventListener("click", mostrarEditarRegioes);
+            document.getElementById("btnAdicionarNovaRegiao").addEventListener("click", adicionarNovaRegiao);
+            document.getElementById("btnSalvarRegioes").addEventListener("click", salvarRegioes);
+            document.getElementById("btnEditarOperadores").addEventListener("click", mostrarEditarOperadores);
+            document.getElementById("btnAdicionarNovoOperador").addEventListener("click", adicionarNovoOperador);
+            document.getElementById("btnSalvarOperadores").addEventListener("click", salvarOperadores);
+            document.getElementById("btnEquipeVolante").addEventListener("click", adicionarEquipeVolante);
+            document.getElementById("btnMissao").addEventListener("click", adicionarMissao);
+            document.getElementById("btnAdicionarSupervisao").addEventListener("click", adicionarSupervisao);
+            document.getElementById("btnSalvarRascunho").addEventListener("click", salvarRascunho);
+            document.getElementById("btnCarregarRascunho").addEventListener("click", carregarRascunho);
+            document.getElementById("btnPreVisualizar").addEventListener("click", preVisualizar);
+            document.getElementById("gerarPdfBtn").addEventListener("click", gerarPdf);
+            document.getElementById("gerarExcelBtn").addEventListener("click", gerarExcel);
+
+            function criarDatalistUnico(input) {
+                const oldDatalist = document.getElementById(input.dataset.datalistId);
+                if (oldDatalist) oldDatalist.remove();
+
+                const datalistId = `operadoresList-${Math.random().toString(36).substr(2, 9)}`;
+                const datalist = document.createElement("datalist");
+                datalist.id = datalistId;
+                document.body.appendChild(datalist);
+                input.setAttribute("list", datalistId);
+                input.dataset.datalistId = datalistId;
+                return datalist;
+            }
+
+            function adicionarEventosOperadores(input) {
+                const datalist = criarDatalistUnico(input);
+
+                input.addEventListener('input', function(e) {
+                    let value = this.value.toUpperCase().replace(/[^A-ZÀ-Ú\s.,]/gi, '');
+                    const parts = value.split(',').map(part => part.trim());
+                    const currentPart = parts[parts.length - 1];
+
+                    datalist.innerHTML = operadores
+                        .filter(op => op.startsWith(currentPart) && !parts.slice(0, -1).includes(op))
+                        .map(op => `<option value="${parts.slice(0, -1).join(', ') + (parts.length > 1 ? ', ' : '') + op}">`)
+                        .join("");
+
+                    this.value = value;
+                    atualizarContagem();
+                });
+
+                input.addEventListener('paste', function(e) {
+                    e.preventDefault();
+                    const textoColado = (e.clipboardData || window.clipboardData).getData('text')
+                        .replace(/[^A-ZÀ-Ú\s.,]/gi, '')
+                        .toUpperCase();
+                    document.execCommand('insertText', false, textoColado);
+                    atualizarContagem();
+                });
+            }
+
+            // Aplica eventos aos campos iniciais
+            document.querySelectorAll('input[placeholder="Digite os nomes dos operadores"]').forEach(input => {
+                if (!input.dataset.eventAdded) {
+                    adicionarEventosOperadores(input);
+                    input.dataset.eventAdded = "true";
+                }
+            });
+            const centralInput = document.getElementById("central");
+            if (!centralInput.dataset.eventAdded) {
+                adicionarEventosOperadores(centralInput);
+                centralInput.dataset.eventAdded = "true";
+            }
+
+            // Observa novos campos dinâmicos
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach(mutation => {
+                    mutation.addedNodes.forEach(node => {
+                        if (node.nodeType === 1) {
+                            const novosInputs = node.querySelectorAll('input[placeholder="Digite os nomes dos operadores"]');
+                            novosInputs.forEach(input => {
+                                if (!input.dataset.eventAdded) {
+                                    adicionarEventosOperadores(input);
+                                    input.dataset.eventAdded = "true";
+                                }
+                            });
+                        }
+                    });
+                });
+            });
+            observer.observe(document.body, { childList: true, subtree: true }); // Observa o body inteiro
+
+            // Inicializa contagem e operadores
+            atualizarContagem();
+            atualizarOperadores();
+        });
+        // Funções de rascunho
+        function salvarRascunho() {
+            const formData = {
+                data: document.getElementById("data").value,
+                turno: document.getElementById("turno").value,
+                supervisor: document.getElementById("supervisor").value,
+                totalOperadores: document.getElementById("totalOperadores").value,
+                internos: document.getElementById("internos").value,
+                externos: document.getElementById("externos").value,
+                central: document.getElementById("central").value,
+                postosFixos: Array.from(document.getElementById("postosFixosContainer").children).map(item => ({
+                    regiao: item.querySelector(".seletor-regiao").value,
+                    outraRegiao: item.querySelector(".outra-regiao").value,
+                    viaturas: Array.from(item.querySelector(".viaturasContainer").children).map(v => ({
+                        tipo: v.querySelector(".seletor-tipo").value,
+                        veiculo: v.querySelector(".seletor-veiculo").value,
+                        operadores: v.querySelector("input[placeholder='Digite os nomes dos operadores']").value,
+                        postoFixo: v.querySelector("input[placeholder='Digite o Posto Fixo']").value,
+                        rendicao: v.querySelector(".seletor-rendicao").value
+                    }))
+                })),
+                equipeVolante: Array.from(document.getElementById("equipeVolanteContainer").children).map(item => ({
+                    regiao: item.querySelector(".seletor-regiao").value,
+                    outraRegiao: item.querySelector(".outra-regiao").value,
+                    viaturas: Array.from(item.querySelector(".viaturasContainer").children).map(v => ({
+                        tipo: v.querySelector(".seletor-tipo").value,
+                        veiculo: v.querySelector(".seletor-veiculo").value,
+                        operadores: v.querySelector("input[placeholder='Digite os nomes dos operadores']").value,
+                        postoBase: v.querySelector("input[placeholder='Digite o Posto Base']").value
+                    }))
+                })),
+                missao: Array.from(document.getElementById("missaoContainer").children).map(missao => ({
+                    evento: missao.querySelector("input[placeholder='Digite missão ou evento']").value,
+                    local: missao.querySelector("input[placeholder='Digite o local']").value,
+                    viaturas: Array.from(missao.querySelector(".viaturasContainer").children).map(v => ({
+                        tipo: v.querySelector(".seletor-tipo").value,
+                        veiculo: v.querySelector(".seletor-veiculo").value,
+                        operadores: v.querySelector("input[placeholder='Digite os nomes dos operadores']").value,
+                        postoBase: v.querySelector("input[placeholder='Digite o Posto Base']").value,
+                        rendicao: v.querySelector(".seletor-rendicao").value
+                    }))
+                })),
+                supervisao: Array.from(document.getElementById("supervisaoContainer").children).map(item => ({
+                    regiao: item.querySelector(".seletor-regiao").value,
+                    veiculo: item.querySelector(".seletor-veiculo").value,
+                    operadores: item.querySelector("input[placeholder='Digite os nomes dos operadores']").value
+                })),
+                observacoes: document.getElementById("observacoes").value
+            };
+            localStorage.setItem("rascunho", JSON.stringify(formData));
+            alert("Rascunho salvo com sucesso!");
+        }
+
+        function carregarRascunho() {
+            const rascunho = JSON.parse(localStorage.getItem("rascunho"));
+            if (!rascunho) {
+                alert("Nenhum rascunho encontrado.");
+                return;
+            }
+            document.getElementById("data").value = rascunho.data || "";
+            document.getElementById("turno").value = rascunho.turno || "";
+            document.getElementById("supervisor").value = rascunho.supervisor || "";
+            document.getElementById("central").value = rascunho.central || "";
+            document.getElementById("observacoes").value = rascunho.observacoes || "";
+
+            const containers = {
+                postosFixosContainer: { items: rascunho.postosFixos || [], fn: adicionarPostoFixo },
+                equipeVolanteContainer: { items: rascunho.equipeVolante || [], fn: adicionarEquipeVolante },
+                missaoContainer: { items: rascunho.missao || [], fn: adicionarMissao },
+                supervisaoContainer: { items: rascunho.supervisao || [], fn: adicionarSupervisao }
+            };
+
+            for (const [containerId, { items, fn }] of Object.entries(containers)) {
+                const container = document.getElementById(containerId);
+                container.innerHTML = "";
+                items.forEach(item => {
+                    fn();
+                    const lastItem = container.lastElementChild;
+                    if (containerId === "postosFixosContainer" || containerId === "equipeVolanteContainer") {
+                        lastItem.querySelector(".seletor-regiao").value = item.regiao;
+                        lastItem.querySelector(".outra-regiao").value = item.outraRegiao || "";
+                        if (item.regiao === "OUTROS") lastItem.querySelector(".outra-regiao").style.display = "block";
+                        const viaturasContainer = lastItem.querySelector(".viaturasContainer");
+                        item.viaturas.forEach(viatura => {
+                            const div = containerId === "postosFixosContainer" ? criarDivViaturaOuMotoPostosFixos() : criarDivEquipeVolante();
+                            div.querySelector(".seletor-tipo").value = viatura.tipo;
+                            div.querySelector(".seletor-veiculo").value = viatura.veiculo;
+                            div.querySelector(".seletor-veiculo").style.display = viatura.tipo === "EQUIPE FIXA" ? "none" : "block";
+                            div.querySelector("input[placeholder='Digite os nomes dos operadores']").value = viatura.operadores || "";
+                            if (containerId === "postosFixosContainer") {
+                                div.querySelector("input[placeholder='Digite o Posto Fixo']").value = viatura.postoFixo || "";
+                                div.querySelector(".seletor-rendicao").value = viatura.rendicao || "NÃO";
+                            } else if (containerId === "equipeVolanteContainer") {
+                                div.querySelector("input[placeholder='Digite o Posto Base']").value = viatura.postoBase || "";
+                            }
+                            viaturasContainer.appendChild(div);
+                        });
+                    } else if (containerId === "missaoContainer") {
+                        lastItem.querySelector("input[placeholder='Digite missão ou evento']").value = item.evento;
+                        lastItem.querySelector("input[placeholder='Digite o local']").value = item.local;
+                        const viaturasContainer = lastItem.querySelector(".viaturasContainer");
+                        item.viaturas.forEach(viatura => {
+                            const div = criarDivMissao();
+                            div.querySelector(".seletor-tipo").value = viatura.tipo;
+                            div.querySelector(".seletor-veiculo").value = viatura.veiculo;
+                            div.querySelector(".seletor-veiculo").style.display = viatura.tipo === "EQUIPE FIXA" ? "none" : "block";
+                            div.querySelector("input[placeholder='Digite os nomes dos operadores']").value = viatura.operadores || "";
+                            div.querySelector("input[placeholder='Digite o Posto Base']").value = viatura.postoBase || "";
+                            div.querySelector(".seletor-rendicao").value = viatura.rendicao || "NÃO";
+                            viaturasContainer.appendChild(div);
+                        });
+                    } else if (containerId === "supervisaoContainer") {
+                        lastItem.querySelector(".seletor-regiao").value = item.regiao;
+                        lastItem.querySelector(".seletor-veiculo").value = item.veiculo;
+                        lastItem.querySelector("input[placeholder='Digite os nomes dos operadores']").value = item.operadores || "";
+                    }
+                });
+            }
+            atualizarContagem();
+            alert("Rascunho carregado com sucesso!");
+        }
+
+        // Função de pré-visualização
+        function preVisualizar() {
+            if (!validarFormulario()) {
+                document.getElementById("errorMessage").style.display = "block";
+                return;
+            }
+            document.getElementById("errorMessage").style.display = "none";
+
+            const data = formatarData(document.getElementById("data").value);
+            const turno = document.getElementById("turno").value;
+            const supervisor = document.getElementById("supervisor").value.toUpperCase();
+            const totalOperadores = document.getElementById("totalOperadores").value;
+            const internos = document.getElementById("internos").value;
+            const externos = document.getElementById("externos").value;
+            const central = document.getElementById("central").value.toUpperCase();
+            const observacoes = document.getElementById("observacoes").value.toUpperCase();
+
+            let htmlContent = `
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        h2 { text-align: center; color: #1a3c34; }
+                        h3 { color: #2e5e56; margin-top: 20px; }
+                        .section { margin-bottom: 20px; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; word-wrap: break-word; max-width: 200px; }
+                        th { background-color: #f2f2f2; }
+                        p { word-wrap: break-word; max-width: 100%; white-space: pre-wrap; }
+                    </style>
+                </head>
+                <body>
+                    <h2>RELATÓRIO OPERACIONAL DE TURNO - VIA LIVRE</h2>
+                    <div class="section">
+                        <p><strong>Data:</strong> ${data}</p>
+                        <p><strong>Turno:</strong> ${turno}</p>
+                        <p><strong>Supervisor:</strong> ${supervisor}</p>
+                        <p><strong>Total de Operadores:</strong> ${totalOperadores} (Internos: ${internos}, Externos: ${externos})</p>
+                    </div>
+                    <h3>01. Central</h3>
+                    <p>${central || "NENHUM OPERADOR INFORMADO"}</p>
+            `;
+
+            // Postos Fixos
+            htmlContent += `<h3>02. Postos Fixos</h3>`;
+            const postosFixos = document.getElementById("postosFixosContainer").children;
+            if (postosFixos.length > 0) {
+                htmlContent += `<table><tr><th>Região</th><th>Tipo</th><th>Prefixo</th><th>Operadores</th><th>Posto Fixo</th><th>Rendição</th></tr>`;
+                Array.from(postosFixos).forEach(posto => {
+                    const regiao = (posto.querySelector(".seletor-regiao").value === "OUTROS" ? posto.querySelector(".outra-regiao").value : posto.querySelector(".seletor-regiao").value).toUpperCase();
+                    const viaturas = posto.querySelector(".viaturasContainer").children;
+                    Array.from(viaturas).forEach(v => {
+                        htmlContent += `
+                            <tr>
+                                <td>${regiao}</td>
+                                <td>${(v.querySelector(".seletor-tipo").value || "-").toUpperCase()}</td>
+                                <td>${(v.querySelector(".seletor-veiculo").value || "-").toUpperCase()}</td>
+                                <td>${(v.querySelector("input[placeholder='Digite os nomes dos operadores']").value || "-").toUpperCase()}</td>
+                                <td>${(v.querySelector("input[placeholder='Digite o Posto Fixo']").value || "-").toUpperCase()}</td>
+                                <td>${v.querySelector(".seletor-rendicao").value}</td>
+                            </tr>`;
+                    });
+                });
+                htmlContent += `</table>`;
+            } else {
+                htmlContent += `<p>NENHUM POSTO FIXO INFORMADO</p>`;
+            }
+
+            // Equipe Volante
+            htmlContent += `<h3>03. Equipe Volante</h3>`;
+            const equipeVolante = document.getElementById("equipeVolanteContainer").children;
+            if (equipeVolante.length > 0) {
+                htmlContent += `<table><tr><th>Região</th><th>Tipo</th><th>Prefixo</th><th>Operadores</th><th>Posto Base</th></tr>`;
+                Array.from(equipeVolante).forEach(equipe => {
+                    const regiao = (equipe.querySelector(".seletor-regiao").value === "OUTROS" ? equipe.querySelector(".outra-regiao").value : equipe.querySelector(".seletor-regiao").value).toUpperCase();
+                    const viaturas = equipe.querySelector(".viaturasContainer").children;
+                    Array.from(viaturas).forEach(v => {
+                        htmlContent += `
+                            <tr>
+                                <td>${regiao}</td>
+                                <td>${(v.querySelector(".seletor-tipo").value || "-").toUpperCase()}</td>
+                                <td>${(v.querySelector(".seletor-veiculo").value || "-").toUpperCase()}</td>
+                                <td>${(v.querySelector("input[placeholder='Digite os nomes dos operadores']").value || "-").toUpperCase()}</td>
+                                <td>${(v.querySelector("input[placeholder='Digite o Posto Base']").value || "-").toUpperCase()}</td>
+                            </tr>`;
+                    });
+                });
+                htmlContent += `</table>`;
+            } else {
+                htmlContent += `<p>NENHUMA EQUIPE VOLANTE INFORMADA</p>`;
+            }
+
+            // Missão ou Evento
+            htmlContent += `<h3>04. Missão ou Evento</h3>`;
+            const missao = document.getElementById("missaoContainer").children;
+            if (missao.length > 0) {
+                htmlContent += `<table><tr><th>Missão/Evento</th><th>Local</th><th>Tipo</th><th>Prefixo</th><th>Operadores</th><th>Posto Base</th><th>Rendição</th></tr>`;
+                Array.from(missao).forEach(m => {
+                    const evento = m.querySelector("input[placeholder='Digite missão ou evento']").value.toUpperCase();
+                    const local = m.querySelector("input[placeholder='Digite o local']").value.toUpperCase();
+                    const viaturas = m.querySelector(".viaturasContainer").children;
+                    Array.from(viaturas).forEach(v => {
+                        htmlContent += `
+                            <tr>
+                                <td>${evento}</td>
+                                <td>${local}</td>
+                                <td>${(v.querySelector(".seletor-tipo").value || "-").toUpperCase()}</td>
+                                <td>${(v.querySelector(".seletor-veiculo").value || "-").toUpperCase()}</td>
+                                <td>${(v.querySelector("input[placeholder='Digite os nomes dos operadores']").value || "-").toUpperCase()}</td>
+                                <td>${(v.querySelector("input[placeholder='Digite o Posto Base']").value || "-").toUpperCase()}</td>
+                                <td>${v.querySelector(".seletor-rendicao").value}</td>
+                            </tr>`;
+                    });
+                });
+                htmlContent += `</table>`;
+            } else {
+                htmlContent += `<p>NENHUMA MISSÃO OU EVENTO INFORMADO</p>`;
+            }
+
+            // Supervisão
+            htmlContent += `<h3>05. Supervisão</h3>`;
+            const supervisao = document.getElementById("supervisaoContainer").children;
+            if (supervisao.length > 0) {
+                htmlContent += `<table><tr><th>Região</th><th>Prefixo</th><th>Operadores</th></tr>`;
+                Array.from(supervisao).forEach(s => {
+                    htmlContent += `
+                        <tr>
+                            <td>${(s.querySelector(".seletor-regiao").value || "-").toUpperCase()}</td>
+                            <td>${(s.querySelector(".seletor-veiculo").value || "-").toUpperCase()}</td>
+                            <td>${(s.querySelector("input[placeholder='Digite os nomes dos operadores']").value || "-").toUpperCase()}</td>
+                        </tr>`;
+                    });
+                htmlContent += `</table>`;
+            } else {
+                htmlContent += `<p>NENHUMA SUPERVISÃO INFORMADA</p>`;
+            }
+
+            // Observações
+            htmlContent += `
+                    <h3>06. Observações</h3>
+                    <p>${observacoes || "NENHUMA OBSERVAÇÃO INFORMADA"}</p>
+                </body>
+                </html>
+            `;
+
+            const previewWindow = window.open("", "_blank");
+            previewWindow.document.write(htmlContent);
+            previewWindow.document.close();
+        }
+
+        // Funções de validação
+        function validarFormulario() {
+            const camposObrigatorios = document.querySelectorAll('input[required], select[required]');
+            let valido = true;
+            camposObrigatorios.forEach(campo => {
+                if (!campo.value.trim()) {
+                    campo.style.borderColor = "#d32f2f";
+                    valido = false;
+                } else {
+                    campo.style.borderColor = "#d0d0d0";
+                }
+            });
+            return valido;
+        }
+                                // Função para gerar PDF
+        function gerarPdf() {
+            if (!validarFormulario()) {
+                document.getElementById("errorMessage").style.display = "block";
+                return;
+            }
+            document.getElementById("errorMessage").style.display = "none";
+
+            if (!window.jspdf || !window.jspdf.jsPDF) {
+                alert("Erro: A biblioteca jsPDF não foi carregada corretamente.");
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+            const margin = 10;
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const usableWidth = pageWidth - 2 * margin; // 190mm
+            let y = margin;
+
+            // Função para adicionar cabeçalho
+            function adicionarCabecalho(doc) {
+                doc.setFillColor(255, 153, 0); // Laranja mais escuro (#FF9900)
+                doc.rect(margin, 5, usableWidth, 10, "F");
+                doc.setFontSize(12);
+                doc.setTextColor(0, 0, 0);
+                doc.text("VIA LIVRE - RELATÓRIO OPERACIONAL", margin + 5, 12);
+                doc.text(`Data: ${formatarData(document.getElementById("data").value)}`, pageWidth - margin - 40, 12, { align: "right" });
+                y = 25; // Aumentado de 20 para 25 para mais espaço
+            }
+
+            // Função para adicionar rodapé
+            function adicionarRodape(doc) {
+                const pageCount = doc.internal.getNumberOfPages();
+                doc.setFillColor(255, 153, 0); // Laranja mais escuro (#FF9900)
+                doc.rect(margin, doc.internal.pageSize.getHeight() - 15, usableWidth, 10, "F");
+                doc.setFontSize(10);
+                doc.setTextColor(0, 0, 0);
+                doc.text("VIA LIVRE", margin + 5, doc.internal.pageSize.getHeight() - 8);
+                doc.text(`Página ${doc.internal.getCurrentPageInfo().pageNumber} de ${pageCount}`, pageWidth - margin - 40, doc.internal.pageSize.getHeight() - 8, { align: "right" });
+            }
+
+            adicionarCabecalho(doc);
+
+            // Título
+            doc.setFontSize(16);
+            doc.setTextColor(26, 60, 52);
+            doc.text("RELATÓRIO OPERACIONAL DE TURNO - VIA LIVRE", pageWidth / 2, y, { align: "center" });
+            y += 10;
+
+            // Dados iniciais
+            doc.setFontSize(12);
+            doc.setTextColor(0, 0, 0);
+            doc.text(`Data: ${formatarData(document.getElementById("data").value)}`, margin, y);
+            y += 6;
+            doc.text(`Turno: ${document.getElementById("turno").value}`, margin, y);
+            y += 6;
+            doc.text(`Supervisor: ${document.getElementById("supervisor").value.toUpperCase()}`, margin, y);
+            y += 6;
+            doc.text(`Total de Operadores: ${document.getElementById("totalOperadores").value} (Internos: ${document.getElementById("internos").value}, Externos: ${document.getElementById("externos").value})`, margin, y);
+            y += 15;
+
+            // Função para adicionar seção
+            function addSection(title, content, hasTable = false, tableData = []) {
+                if (y > 250) {
+                    adicionarRodape(doc);
+                    doc.addPage();
+                    adicionarCabecalho(doc);
+                    y = 25; // Ajustado para manter consistência
+                }
+                doc.setFontSize(14);
+                doc.setTextColor(46, 94, 86);
+                doc.text(title, margin, y);
+                y += 8;
+
+                doc.setFontSize(12);
+                doc.setTextColor(0, 0, 0);
+                if (!hasTable) {
+                    const lines = doc.splitTextToSize(content.toUpperCase() || "NENHUM DADO INFORMADO", usableWidth);
+                    doc.text(lines, margin, y);
+                    y += lines.length * 5 + 10;
+                } else if (tableData.length > 0) {
+                    const columnCount = tableData[0].length;
+                    const columnWidth = usableWidth / columnCount;
+                    const columnStyles = {};
+                    for (let i = 0; i < columnCount; i++) {
+                        columnStyles[i] = { cellWidth: columnWidth };
+                    }
+
+                    doc.autoTable({
+                        startY: y,
+                        head: [tableData[0]],
+                        body: tableData.slice(1).map(row => row.map(cell => cell.toUpperCase())),
+                        theme: "grid",
+                        styles: { fontSize: 8, cellPadding: 2, overflow: "linebreak" },
+                        headStyles: { 
+                            halign: "center", 
+                            fontSize: 8, 
+                            fillColor: [255, 153, 0], // Laranja mais escuro (#FF9900)
+                            textColor: [0, 0, 0] 
+                        },
+                        columnStyles: columnStyles,
+                        margin: { left: margin, right: margin },
+                        tableWidth: usableWidth,
+                        pageBreak: "auto",
+                        didDrawPage: () => {
+                            adicionarRodape(doc);
+                            y = doc.lastAutoTable.finalY + 15;
+                        }
+                    });
+                    y = doc.lastAutoTable.finalY + 15;
+                } else {
+                    doc.text("NENHUM DADO INFORMADO", margin, y);
+                    y += 15;
+                }
+
+                // Linha de separação
+                doc.setLineWidth(0.2);
+                doc.setDrawColor(200, 200, 200);
+                doc.line(margin, y - 5, pageWidth - margin, y - 5);
+                y += 5;
+            }
+
+            // 01. Central
+            addSection("01. Central", document.getElementById("central").value);
+
+            // 02. Postos Fixos
+            const postosFixos = Array.from(document.getElementById("postosFixosContainer").children).flatMap(posto => {
+                const regiao = posto.querySelector(".seletor-regiao").value === "OUTROS" ? posto.querySelector(".outra-regiao").value : posto.querySelector(".seletor-regiao").value;
+                return Array.from(posto.querySelector(".viaturasContainer").children).map(v => [
+                    regiao,
+                    v.querySelector(".seletor-tipo").value || "-",
+                    v.querySelector(".seletor-veiculo").value || "-",
+                    v.querySelector("input[placeholder='Digite os nomes dos operadores']").value || "-",
+                    v.querySelector("input[placeholder='Digite o Posto Fixo']").value || "-",
+                    v.querySelector(".seletor-rendicao").value
+                ]);
+            });
+            addSection("02. Postos Fixos", "", true, postosFixos.length > 0 ? [["Região", "Tipo", "Prefixo", "Operadores", "Posto Fixo", "Rendição"], ...postosFixos] : []);
+
+            // 03. Equipe Volante
+            const equipeVolante = Array.from(document.getElementById("equipeVolanteContainer").children).flatMap(equipe => {
+                const regiao = equipe.querySelector(".seletor-regiao").value === "OUTROS" ? equipe.querySelector(".outra-regiao").value : equipe.querySelector(".seletor-regiao").value;
+                return Array.from(equipe.querySelector(".viaturasContainer").children).map(v => [
+                    regiao,
+                    v.querySelector(".seletor-tipo").value || "-",
+                    v.querySelector(".seletor-veiculo").value || "-",
+                    v.querySelector("input[placeholder='Digite os nomes dos operadores']").value || "-",
+                    v.querySelector("input[placeholder='Digite o Posto Base']").value || "-"
+                ]);
+            });
+            addSection("03. Equipe Volante", "", true, equipeVolante.length > 0 ? [["Região", "Tipo", "Prefixo", "Operadores", "Posto Base"], ...equipeVolante] : []);
+
+            // 04. Missão ou Evento
+            const missao = Array.from(document.getElementById("missaoContainer").children).flatMap(m => {
+                const evento = m.querySelector("input[placeholder='Digite missão ou evento']").value;
+                const local = m.querySelector("input[placeholder='Digite o local']").value;
+                return Array.from(m.querySelector(".viaturasContainer").children).map(v => [
+                    evento,
+                    local,
+                    v.querySelector(".seletor-tipo").value || "-",
+                    v.querySelector(".seletor-veiculo").value || "-",
+                    v.querySelector("input[placeholder='Digite os nomes dos operadores']").value || "-",
+                    v.querySelector("input[placeholder='Digite o Posto Base']").value || "-",
+                    v.querySelector(".seletor-rendicao").value
+                ]);
+            });
+            addSection("04. Missão ou Evento", "", true, missao.length > 0 ? [["Missão/Evento", "Local", "Tipo", "Prefixo", "Operadores", "Posto Base", "Rendição"], ...missao] : []);
+
+            // 05. Supervisão
+            const supervisao = Array.from(document.getElementById("supervisaoContainer").children).map(s => [
+                s.querySelector(".seletor-regiao").value || "-",
+                s.querySelector(".seletor-veiculo").value || "-",
+                s.querySelector("input[placeholder='Digite os nomes dos operadores']").value || "-"
+            ]);
+            addSection("05. Supervisão", "", true, supervisao.length > 0 ? [["Região", "Prefixo", "Operadores"], ...supervisao] : []);
+
+            // 06. Observações
+            addSection("06. Observações", document.getElementById("observacoes").value);
+
+            adicionarRodape(doc);
+            doc.save(`Relatorio_Operacional_${formatarData(document.getElementById("data").value).replace(/\//g, "-")}_${document.getElementById("turno").value}.pdf`);
+        }
+
+        // Função para gerar Excel (sem alterações)
+        function gerarExcel() {
+            if (!validarFormulario()) {
+                document.getElementById("errorMessage").style.display = "block";
+                return;
+            }
+            document.getElementById("errorMessage").style.display = "none";
+
+            if (!window.XLSX) {
+                alert("Erro: A biblioteca XLSX não foi carregada corretamente.");
+                return;
+            }
+
+            const wb = XLSX.utils.book_new();
+            const data = formatarData(document.getElementById("data").value);
+            const turno = document.getElementById("turno").value;
+
+            const wsGeral = XLSX.utils.aoa_to_sheet([
+                ["RELATÓRIO OPERACIONAL DE TURNO - VIA LIVRE"],
+                ["Data", data],
+                ["Turno", turno],
+                ["Supervisor", document.getElementById("supervisor").value.toUpperCase()],
+                ["Total de Operadores", document.getElementById("totalOperadores").value],
+                ["Internos", document.getElementById("internos").value],
+                ["Externos", document.getElementById("externos").value],
+                [],
+                ["01. Central"],
+                [document.getElementById("central").value.toUpperCase() || "NENHUM OPERADOR INFORMADO"]
+            ]);
+
+            const postosFixosData = [["02. Postos Fixos"], ["Região", "Tipo", "Prefixo", "Operadores", "Posto Fixo", "Rendição"]];
+            Array.from(document.getElementById("postosFixosContainer").children).forEach(posto => {
+                const regiao = (posto.querySelector(".seletor-regiao").value === "OUTROS" ? posto.querySelector(".outra-regiao").value : posto.querySelector(".seletor-regiao").value).toUpperCase();
+                Array.from(posto.querySelector(".viaturasContainer").children).forEach(v => {
+                    postosFixosData.push([
+                        regiao,
+                        (v.querySelector(".seletor-tipo").value || "-").toUpperCase(),
+                        (v.querySelector(".seletor-veiculo").value || "-").toUpperCase(),
+                        (v.querySelector("input[placeholder='Digite os nomes dos operadores']").value || "-").toUpperCase(),
+                        (v.querySelector("input[placeholder='Digite o Posto Fixo']").value || "-").toUpperCase(),
+                        v.querySelector(".seletor-rendicao").value
+                    ]);
+                });
+            });
+            if (postosFixosData.length === 2) postosFixosData.push(["NENHUM POSTO FIXO INFORMADO"]);
+            const wsPostosFixos = XLSX.utils.aoa_to_sheet(postosFixosData);
+
+            const equipeVolanteData = [["03. Equipe Volante"], ["Região", "Tipo", "Prefixo", "Operadores", "Posto Base"]];
+            Array.from(document.getElementById("equipeVolanteContainer").children).forEach(equipe => {
+                const regiao = (equipe.querySelector(".seletor-regiao").value === "OUTROS" ? equipe.querySelector(".outra-regiao").value : equipe.querySelector(".seletor-regiao").value).toUpperCase();
+                Array.from(equipe.querySelector(".viaturasContainer").children).forEach(v => {
+                    equipeVolanteData.push([
+                        regiao,
+                        (v.querySelector(".seletor-tipo").value || "-").toUpperCase(),
+                        (v.querySelector(".seletor-veiculo").value || "-").toUpperCase(),
+                        (v.querySelector("input[placeholder='Digite os nomes dos operadores']").value || "-").toUpperCase(),
+                        (v.querySelector("input[placeholder='Digite o Posto Base']").value || "-").toUpperCase()
+                    ]);
+                });
+            });
+            if (equipeVolanteData.length === 2) equipeVolanteData.push(["NENHUMA EQUIPE VOLANTE INFORMADA"]);
+            const wsEquipeVolante = XLSX.utils.aoa_to_sheet(equipeVolanteData);
+
+            const missaoData = [["04. Missão ou Evento"], ["Missão/Evento", "Local", "Tipo", "Prefixo", "Operadores", "Posto Base", "Rendição"]];
+            Array.from(document.getElementById("missaoContainer").children).forEach(m => {
+                const evento = m.querySelector("input[placeholder='Digite missão ou evento']").value.toUpperCase();
+                const local = m.querySelector("input[placeholder='Digite o local']").value.toUpperCase();
+                Array.from(m.querySelector(".viaturasContainer").children).forEach(v => {
+                    missaoData.push([
+                        evento,
+                        local,
+                        (v.querySelector(".seletor-tipo").value || "-").toUpperCase(),
+                        (v.querySelector(".seletor-veiculo").value || "-").toUpperCase(),
+                        (v.querySelector("input[placeholder='Digite os nomes dos operadores']").value || "-").toUpperCase(),
+                        (v.querySelector("input[placeholder='Digite o Posto Base']").value || "-").toUpperCase(),
+                        v.querySelector(".seletor-rendicao").value
+                    ]);
+                });
+            });
+            if (missaoData.length === 2) missaoData.push(["NENHUMA MISSÃO OU EVENTO INFORMADO"]);
+            const wsMissao = XLSX.utils.aoa_to_sheet(missaoData);
+
+            const supervisaoData = [["05. Supervisão"], ["Região", "Prefixo", "Operadores"]];
+            Array.from(document.getElementById("supervisaoContainer").children).forEach(s => {
+                supervisaoData.push([
+                    (s.querySelector(".seletor-regiao").value || "-").toUpperCase(),
+                    (s.querySelector(".seletor-veiculo").value || "-").toUpperCase(),
+                    (s.querySelector("input[placeholder='Digite os nomes dos operadores']").value || "-").toUpperCase()
+                ]);
+            });
+            if (supervisaoData.length === 2) supervisaoData.push(["NENHUMA SUPERVISÃO INFORMADA"]);
+            const wsSupervisao = XLSX.utils.aoa_to_sheet(supervisaoData);
+
+            const wsObservacoes = XLSX.utils.aoa_to_sheet([
+                ["06. Observações"],
+                [document.getElementById("observacoes").value.toUpperCase() || "NENHUMA OBSERVAÇÃO INFORMADA"]
+            ]);
+
+            XLSX.utils.book_append_sheet(wb, wsGeral, "Geral");
+            XLSX.utils.book_append_sheet(wb, wsPostosFixos, "Postos Fixos");
+            XLSX.utils.book_append_sheet(wb, wsEquipeVolante, "Equipe Volante");
+            XLSX.utils.book_append_sheet(wb, wsMissao, "Missão ou Evento");
+            XLSX.utils.book_append_sheet(wb, wsSupervisao, "Supervisão");
+            XLSX.utils.book_append_sheet(wb, wsObservacoes, "Observações");
+
+            XLSX.writeFile(wb, `Relatorio_Operacional_${data.replace(/\//g, "-")}_${turno}.xlsx`);
+        }
+    </script>
+</body>
+</html>
