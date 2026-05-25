@@ -533,7 +533,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy);color:var(--t
     <div class="fsec"><div class="fsec-title">17. Supervisão</div><div id="supervisaoContainer"></div><button class="btnadd green" onclick="addSupervisao()"><i class="fas fa-plus"></i> Adicionar Supervisão</button></div>
 
     <!-- 18 observações -->
-    <div class="fsec"><div class="fsec-title">18. Observações</div><textarea class="ftextarea" id="observacoes" rows="4" placeholder="Observações gerais do turno..."></textarea></div>
+    <div class="fsec"><div class="fsec-title">18. Observações</div><textarea class="ftextarea" id="observacoes" rows="4" placeholder="Observações gerais do turno..." oninput="agendarAutoSave()"></textarea></div>
 
     <div style="padding-bottom:20px;"></div>
   </div>
@@ -1386,7 +1386,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy);color:var(--t
 // ══════════════════════════════════════════════
 // CONFIGURAÇÃO
 // ══════════════════════════════════════════════
-const APP_VERSION='2026-05-25-v2'; // Via Livre integrado // ← atualize esta string a cada deploy
+const APP_VERSION='2026-05-25-v5'; // Via Livre integrado // ← atualize esta string a cada deploy
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycbyDri3Se73SVwZLiAib2Cf7B9uPN4_LO0ccicrDf5ZQWt6NWLOt2xdpf0tJv9XCiDAUzw/exec';
 const LS={session:'amc_rel_session',agentes:'agentesPersonalizados',rotas:'rotasPersonalizadas'};
 const DPW={admin:'admin2026',supervisor:'sup2026',central:'ceope2026',chefia:'chefia2026',operadorvl:'vl2026'};
@@ -3061,8 +3061,11 @@ function agendarAutoSave(){
   if(G.savingTimer)clearTimeout(G.savingTimer);
   G.savingTimer=setTimeout(()=>{
     if(['admin','supervisor'].includes(G.role)&&(!G.bloqueado||G.desbloqueado)){
-      // Não salvar se há campo em foco (usuário digitando)
-      if(document.activeElement&&(document.activeElement.tagName==='INPUT'||document.activeElement.tagName==='TEXTAREA'))return;
+      // Se há campo em foco (usuário digitando), reagendar em vez de cancelar
+      if(document.activeElement&&(document.activeElement.tagName==='INPUT'||document.activeElement.tagName==='TEXTAREA')){
+        G.savingTimer=setTimeout(()=>salvarNaNuvemSilencioso(),5000);
+        return;
+      }
       salvarNaNuvemSilencioso();
     }
   },8000);
