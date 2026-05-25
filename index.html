@@ -1386,7 +1386,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy);color:var(--t
 // ══════════════════════════════════════════════
 // CONFIGURAÇÃO
 // ══════════════════════════════════════════════
-const APP_VERSION='2026-05-25-v1'; // Via Livre integrado // ← atualize esta string a cada deploy
+const APP_VERSION='2026-05-25-v2'; // Via Livre integrado // ← atualize esta string a cada deploy
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycbyDri3Se73SVwZLiAib2Cf7B9uPN4_LO0ccicrDf5ZQWt6NWLOt2xdpf0tJv9XCiDAUzw/exec';
 const LS={session:'amc_rel_session',agentes:'agentesPersonalizados',rotas:'rotasPersonalizadas'};
 const DPW={admin:'admin2026',supervisor:'sup2026',central:'ceope2026',chefia:'chefia2026',operadorvl:'vl2026'};
@@ -6481,12 +6481,13 @@ function qrvvlRenderRow(r, podeEditar) {
   var isSup    = r.secao === 'supervisao_vl';
   var isMain   = r.secao === 'volante';
   var isPostos = r.secao === 'postos';
+  var isMissao = r.secao === 'missao';
   var temVt    = r.vt && r.vt !== '—' && r.vt.trim() !== '';
 
-  // Badge: postos fixos sem VT → ícone pessoa; demais → badge normal
+  // Badge: postos fixos ou missão sem VT → ícone pessoa; demais → badge normal
   var badgeClass = isMain ? 'principal' : isSup ? 'supervisao' : '';
   var vtBadge;
-  if (isPostos && !temVt) {
+  if ((isPostos || isMissao) && !temVt) {
     vtBadge = '<span class="qrv-vt-badge" style="background:#92400e;font-size:14px;padding:3px 7px;">🚶</span>';
   } else {
     vtBadge = '<span class="qrv-vt-badge '+badgeClass+'">'+(r.vt||'?')+'</span>';
