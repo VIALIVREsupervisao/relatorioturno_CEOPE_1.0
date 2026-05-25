@@ -175,28 +175,21 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy);color:var(--t
 .view-card-val{font-size:13px;color:#fff;}
 
 @media(max-width:600px){
-  /* QRV VL cards mobile */
-  .qrv-row-main{flex-wrap:wrap;gap:4px;padding:7px 8px;}
-  .qrv-vt-badge{flex-shrink:0;order:0;}
-  .qrv-status-pill{order:1;flex-shrink:0;}
-  .qrv-row-info{order:2;width:100%;min-width:0;}
-  .qrv-row-nomes{white-space:normal;overflow:visible;text-overflow:unset;font-size:12px;line-height:1.4;}
-  .qrv-row-rota{white-space:normal;overflow:visible;text-overflow:unset;font-size:10px;}
-  .qrv-saida-input{order:3;width:72px;flex-shrink:0;}
-  .qrv-rel-tag{order:4;flex-shrink:0;}
-  .qrv-btn-status{order:5;padding:4px 8px;font-size:11px;}
-  .qrv-btn-expand{order:6;}
-  .qrv-btn-del{order:7;}
-  .qrv-sync{order:8;}
+  /* QRV VL cards mobile — duas linhas */
+  .qrvvl-card-main{flex-wrap:wrap;gap:4px;padding:7px 8px;}
+  .qrvvl-card-main .qrv-vt-badge{flex-shrink:0;}
+  .qrvvl-card-main .qrv-status-pill{flex-shrink:0;}
+  .qrvvl-card-main .qrv-row-info{width:100%;order:3;min-width:0;}
+  .qrvvl-card-main .qrv-row-nomes{white-space:normal;overflow:visible;text-overflow:unset;font-size:12px;line-height:1.4;}
+  .qrvvl-card-main .qrv-row-rota{white-space:normal;overflow:visible;font-size:10px;}
+  .qrvvl-card-main .qrv-saida-input{width:72px;flex-shrink:0;}
   /* Tabela somente leitura mobile */
   .view-sec{padding:10px 8px;}
   .view-table-wrap{margin:0;}
   .view-table{min-width:0;width:100%;table-layout:fixed;}
   .view-table th,.view-table td{padding:6px 4px;font-size:11px;word-break:break-word;overflow-wrap:break-word;}
   .view-table th{white-space:nowrap;font-size:10px;}
-  /* Ocultar coluna Rendição no mobile */
   .view-table th:last-child,.view-table td:last-child{display:none;}
-  /* Larguras fixas para as colunas restantes */
   .view-table th:nth-child(1),.view-table td:nth-child(1){width:22px;}
   .view-table th:nth-child(2),.view-table td:nth-child(2){width:60px;}
   .view-table th:nth-child(3),.view-table td:nth-child(3){width:52px;}
@@ -1393,7 +1386,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy);color:var(--t
 // ══════════════════════════════════════════════
 // CONFIGURAÇÃO
 // ══════════════════════════════════════════════
-const APP_VERSION='2026-05-20-v3'; // Via Livre integrado // ← atualize esta string a cada deploy
+const APP_VERSION='2026-05-25-v1'; // Via Livre integrado // ← atualize esta string a cada deploy
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycbyDri3Se73SVwZLiAib2Cf7B9uPN4_LO0ccicrDf5ZQWt6NWLOt2xdpf0tJv9XCiDAUzw/exec';
 const LS={session:'amc_rel_session',agentes:'agentesPersonalizados',rotas:'rotasPersonalizadas'};
 const DPW={admin:'admin2026',supervisor:'sup2026',central:'ceope2026',chefia:'chefia2026',operadorvl:'vl2026'};
@@ -6520,16 +6513,12 @@ function qrvvlRenderRow(r, podeEditar) {
 
   // Editável
   return '<div class="qrv-row" data-id="'+r.id+'">'
-    // Linha 1: badge + nome/rota (largura total)
-    +'<div style="display:flex;align-items:center;gap:6px;padding:8px 10px 4px;">'
+    +'<div class="qrv-row-main qrvvl-card-main">'
     +vtBadge
-    +'<div style="flex:1;min-width:0;">'
-    +'<div style="font-size:12px;color:#fff;font-weight:600;line-height:1.4;white-space:normal;word-break:break-word;">'+(r.agentes||'<span style="color:var(--text3);font-style:italic;">sem agentes</span>')+'</div>'
-    +(r.rota?'<div style="font-size:10px;color:#94a3b8;font-family:\'IBM Plex Mono\',monospace;white-space:normal;word-break:break-word;">'+r.rota+'</div>':'')
+    +'<div class="qrv-row-info">'
+    +'<div class="qrv-row-nomes">'+(r.agentes||'<span style="color:var(--text3);font-style:italic;">sem agentes</span>')+'</div>'
+    +(r.rota?'<div class="qrv-row-rota">'+r.rota+'</div>':'')
     +'</div>'
-    +'</div>'
-    // Linha 2: status + hora + botões
-    +'<div style="display:flex;align-items:center;gap:4px;padding:0 10px 8px;flex-wrap:wrap;">'
     +qrvvlGetStatusPills(r)
     +'<input type="time" class="qrv-saida-input" id="qrvvlSaidaInp_'+r.id+'" value="'+(r.saida||'')+'" title="Hora de saída"'
     +' onclick="event.stopPropagation()"'
