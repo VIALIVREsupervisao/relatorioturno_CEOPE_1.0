@@ -1739,7 +1739,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy);color:var(--t
 // ══════════════════════════════════════════════
 // CONFIGURAÇÃO
 // ══════════════════════════════════════════════
-const APP_VERSION='2026-06-11-v1'; // Via Livre integrado // ← atualize esta string a cada deploy
+const APP_VERSION='2026-06-11-v3'; // Via Livre integrado // ← atualize esta string a cada deploy
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycbwNQg7oS7yITWKweCAqi0XvF8Bgn45ua7a9uVyMjPf95RsD59AQJGMwHYTAjguI-JVs/exec';
 const LS={session:'amc_rel_session',agentes:'agentesPersonalizados',rotas:'rotasPersonalizadas'};
 // Limpar sessão ao detectar nova versão — força re-login em todos os usuários
@@ -9460,11 +9460,29 @@ select.sf-input { text-transform: none; }
   .sf-ck-grid { grid-template-columns: 1fr; }
   .sf-img-grid { grid-template-columns: 1fr 1fr; }
   .sf-input { font-size: 16px !important; padding: 12px !important; }
-  .sf-add-btn, .sf-add-btn-blue { width: 100%; padding: 12px; font-size: 14px; }
-  .sf-btnrem { padding: 6px 10px; }
-  .sf-item, .sf-item-blue { padding: 12px 12px 12px 12px; }
+  .sf-add-btn, .sf-add-btn-blue { width: 100%; padding: 13px; font-size: 14px; margin-top: 6px; }
+  .sf-btnrem { padding: 8px 12px; font-size: 13px; }
+  .sf-item, .sf-item-blue { padding: 12px; margin-bottom: 10px; }
   .sf-img-slot { min-height: 120px; }
-  #sfModalBox { border-radius: 0 !important; height: 100vh !important; max-height: 100vh !important; }
+  .sf-section { padding: 12px; }
+  .sf-section-title { font-size: 14px; }
+  .sf-subsec { padding: 10px; }
+  .sf-ck-item { padding: 10px 8px; font-size: 13px; }
+  #sfModalBox {
+    border-radius: 0 !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  #sfModal {
+    align-items: flex-end !important;
+  }
+  /* Evitar travamento ao rolar — desabilitar pointer-events no overlay */
+  #sfFormBody { touch-action: pan-y; }
+  #telaFatais { touch-action: pan-y; }
 }
 
 </style>
@@ -9769,7 +9787,7 @@ function sfPodeEditar() { return ['admin','supervisor'].includes(G.role); }
 function sfPodeLer()    { return ['admin','supervisor','central','chefia'].includes(G.role); }
 function sfCharCount(el,id){ const c=document.getElementById(id); if(c) c.textContent=el.value.length+' caracteres'; }
 
-// Força maiúsculo em inputs/textareas dentro do modal
+// Força maiúsculo + agenda auto-save em inputs do modal
 document.addEventListener('input', function(e){
   const el=e.target;
   if (!el.closest('#sfModal')) return;
@@ -9777,6 +9795,11 @@ document.addEventListener('input', function(e){
     const p=el.selectionStart; el.value=el.value.toUpperCase();
     try{el.setSelectionRange(p,p);}catch(err){}
   }
+  sfAgendarAutoSave();
+});
+document.addEventListener('change', function(e){
+  if (!e.target.closest('#sfModal')) return;
+  sfAgendarAutoSave();
 });
 
 // ── API ───────────────────────────────────────────────────────
@@ -10167,11 +10190,10 @@ function sfAddEnvolvido(e={}) {
       <option value="NÃO IDENTIFICADO"${e.vinculo==='NÃO IDENTIFICADO'?' selected':''}>Não Identificado</option>
       ${sfGetVeicOpts()}
     </select>
-    <div class="campos-animal${e.vinculo==='ANIMAL'?'':' campo-oculto'}">
+    <div class="campos-animal campo-oculto" style="display:none;">
       <label class="sf-label">Tipo de Animal</label><input type="text" class="sf-input e-animal" placeholder="CACHORRO, CAVALO..." value="${e.animal||''}">
     </div>
-    <div class="campos-pessoa${e.vinculo==='ANIMAL'||e.vinculo==='NÃO IDENTIFICADO'?' campo-oculto':''}">
-      <label class="sf-label">Nome</label><input type="text" class="sf-input e-nome" value="${e.nome||''}" onchange="sfAtualizarEnvInfo(${id})">
+    <div class="campos-pessoa${(e.vinculo==='ANIMAL'||e.vinculo==='NÃO IDENTIFICADO')?' campo-oculto':''}" style="${(e.vinculo==='ANIMAL'||e.vinculo==='NÃO IDENTIFICADO')?'display:none;':''}">onchange="sfAtualizarEnvInfo(${id})">
       <div class="sf-row"><div><label class="sf-label">RG</label><input type="text" class="sf-input e-rg" inputmode="numeric" maxlength="20" oninput="this.value=this.value.replace(/\D/g,'')" value="${e.rg||''}"></div><div><label class="sf-label">CPF</label><input type="text" class="sf-input e-cpf" inputmode="numeric" maxlength="14" oninput="sfMascaraCPF(this)" value="${e.cpf||''}"></div></div>
       <div class="sf-row">
         <div>
@@ -10198,9 +10220,12 @@ function sfSincNasc(inp){let v=inp.value.replace(/\D/g,'');if(v.length>=2)v=v.su
 function sfToggleCamposEnv(sel){
   const item=sel.closest('.sf-item');
   const isAnimal=sel.value==='ANIMAL';
-  const isPedOrVeic=!isAnimal&&sel.value!=='NÃO IDENTIFICADO';
-  item.querySelector('.campos-animal').classList.toggle('campo-oculto',!isAnimal);
-  item.querySelector('.campos-pessoa').classList.toggle('campo-oculto',!isPedOrVeic);
+  const isNaoId=sel.value==='NÃO IDENTIFICADO';
+  const isPessoa=!isAnimal&&!isNaoId;
+  const animalDiv=item.querySelector('.campos-animal');
+  const pessoaDiv=item.querySelector('.campos-pessoa');
+  if(animalDiv){animalDiv.style.display=isAnimal?'block':'none';animalDiv.classList.toggle('campo-oculto',!isAnimal);}
+  if(pessoaDiv){pessoaDiv.style.display=isPessoa?'block':'none';pessoaDiv.classList.toggle('campo-oculto',!isPessoa);}
   sfAtualizarFatores();
 }
 function sfAtualizarEnvInfo(id){const item=document.querySelector(`[data-envolvido-id="${id}"]`);if(!item)return;sfEnvolvidosInfo[id]={nome:item.querySelector('.e-nome').value};sfAtualizarFatores();sfAtualizarTestes();}
@@ -10315,59 +10340,88 @@ function sfAddOrgao(tipo,v={}) {
 }
 
 // ── Sugestões AMC ─────────────────────────────────────────────
-function sfAmcSugestVtr(inp){
-  sfAmcFecharSug(inp);
-  const val=(inp.value||'').toUpperCase().trim();
-  // Usa array viaturas do sistema principal
-  const all=typeof viaturas!=='undefined'?viaturas:[];
-  const fil=val?all.filter(v=>v.toUpperCase().startsWith(val)):all.slice(0,15);
-  if(!fil.length)return;
+function sfAmcCriarSug(inp, itens, onSelect){
+  if(inp._sfSug){inp._sfSug.remove();inp._sfSug=null;}
+  if(!itens.length)return;
   const sug=document.createElement('div');
   sug.className='suggestions';
-  sug.style.cssText='position:absolute;top:100%;left:0;right:0;z-index:9999;max-height:160px;overflow-y:auto;';
-  sug.innerHTML='<ul>'+fil.slice(0,15).map(v=>'<li>'+v+'</li>').join('')+'</ul>';
-  inp.parentElement.style.position='relative';
+  sug.style.cssText='position:absolute;top:100%;left:0;right:0;z-index:9999;max-height:180px;overflow-y:auto;border-radius:0 0 8px 8px;';
+  sug.innerHTML='<ul>'+itens.map(a=>'<li style="padding:12px 14px;font-size:14px;">'+a+'</li>').join('')+'</ul>';
   inp.parentElement.appendChild(sug);
   inp._sfSug=sug;
   sug.querySelectorAll('li').forEach(li=>{
-    li.addEventListener('mousedown',e=>{e.preventDefault();inp.value=li.textContent.trim();sug.remove();inp._sfSug=null;});
-    li.addEventListener('touchend',e=>{e.preventDefault();inp.value=li.textContent.trim();sug.remove();inp._sfSug=null;});
+    const pick=()=>{onSelect(li.textContent.trim());sug.remove();inp._sfSug=null;inp.focus();};
+    li.addEventListener('mousedown',e=>{e.preventDefault();pick();});
+    let _ty=0;
+    li.addEventListener('touchstart',e=>{_ty=e.touches[0].clientY;},{passive:true});
+    li.addEventListener('touchend',e=>{if(Math.abs(e.changedTouches[0].clientY-_ty)<8){e.preventDefault();pick();}},{passive:false});
   });
 }
+function sfAmcSugestVtr(inp){
+  const val=(inp.value||'').toUpperCase().trim();
+  const all=typeof viaturas!=='undefined'?viaturas:[];
+  // Filtra por contains (inclui qualquer parte do texto)
+  const fil=val?all.filter(v=>v.toUpperCase().includes(val)):all.slice(0,20);
+  sfAmcCriarSug(inp, fil.slice(0,20), nome=>{inp.value=nome; sfAgendarAutoSave();});
+}
 function sfAmcSugestAg(inp){
-  sfAmcFecharSug(inp);
-  const val=(inp.value||'');
+  const val=inp.value||'';
   const lastComma=val.lastIndexOf(',');
   const cur=(lastComma>=0?val.substring(lastComma+1):val).trim().toUpperCase();
   if(!cur||cur.length<1)return;
   const all=typeof agentes!=='undefined'?agentes:[];
   const fil=all.filter(a=>a.toUpperCase().startsWith(cur)).slice(0,15);
-  if(!fil.length)return;
-  const sug=document.createElement('div');
-  sug.className='suggestions';
-  sug.style.cssText='position:absolute;top:100%;left:0;right:0;z-index:9999;max-height:160px;overflow-y:auto;';
-  sug.innerHTML='<ul>'+fil.map(a=>'<li>'+a+'</li>').join('')+'</ul>';
-  inp.parentElement.style.position='relative';
-  inp.parentElement.appendChild(sug);
-  inp._sfSug=sug;
-  sug.querySelectorAll('li').forEach(li=>{
-    li.addEventListener('mousedown',e=>{
-      e.preventDefault();
-      const v=inp.value.trim();const lc=v.lastIndexOf(',');
-      const prefix=lc>=0?v.substring(0,lc+1).trim():'';
-      inp.value=(prefix?prefix+' ':'')+li.textContent.trim()+', ';
-      sug.remove();inp._sfSug=null;inp.focus();
-    });
-    li.addEventListener('touchend',e=>{
-      e.preventDefault();
-      const v=inp.value.trim();const lc=v.lastIndexOf(',');
-      const prefix=lc>=0?v.substring(0,lc+1).trim():'';
-      inp.value=(prefix?prefix+' ':'')+li.textContent.trim()+', ';
-      sug.remove();inp._sfSug=null;inp.focus();
-    });
+  sfAmcCriarSug(inp, fil, nome=>{
+    const v=inp.value.trim();const lc=v.lastIndexOf(',');
+    const prefix=lc>=0?v.substring(0,lc+1).trim():'';
+    inp.value=(prefix?prefix+' ':'')+nome+', ';
+    sfAgendarAutoSave();
   });
 }
-function sfAmcFecharSug(inp){setTimeout(()=>{if(inp._sfSug){inp._sfSug.remove();inp._sfSug=null;}},200);}
+function sfAmcFecharSug(inp){setTimeout(()=>{if(inp&&inp._sfSug){inp._sfSug.remove();inp._sfSug=null;}},250);}
+
+// ── Auto-save Sinistros Fatais ────────────────────────────────
+var sfSaveTimer=null;
+function sfAgendarAutoSave(){
+  if(sfSaveTimer)clearTimeout(sfSaveTimer);
+  sfSaveTimer=setTimeout(()=>{
+    // Se usuário ainda está com cursor em algum campo, reagendar por mais 5s
+    const el=document.activeElement;
+    if(el&&el.closest&&el.closest('#sfModal')&&(el.tagName==='INPUT'||el.tagName==='TEXTAREA')){
+      sfSaveTimer=setTimeout(()=>sfAutoSalvarSilencioso(),5000);
+      return;
+    }
+    sfAutoSalvarSilencioso();
+  },8000);
+}
+async function sfAutoSalvarSilencioso(){
+  // Verificar se modal está aberto e se há dados mínimos
+  const modal=document.getElementById('sfModal');
+  if(!modal||modal.style.display==='none'||modal.style.display==='')return;
+  const dados=sfColetarDados();
+  // Exige ao menos data, hora e logradouro para auto-salvar
+  if(!dados.data||!dados.hora||!dados.logradouro)return;
+  try{
+    let action, res;
+    if(sfEditandoId){
+      // Já tem ID — atualizar
+      dados.id=sfEditandoId;
+      res=await apiFatais('updateSinistroFatal',dados);
+    } else {
+      // Sem ID — criar novo automaticamente
+      res=await apiFatais('saveSinistroFatal',dados);
+      if(res&&res.id){
+        sfEditandoId=res.id;
+        // Atualizar título do modal para indicar que já foi salvo
+        const tit=document.getElementById('sfModalTit');
+        if(tit)tit.textContent='✏ EDITAR SINISTRO FATAL';
+      }
+    }
+    const info=document.getElementById('sfRefreshInfo');
+    if(info)info.textContent='Auto-salvo '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    sfCarregar();
+  }catch(e){console.warn('[SF] auto-save falhou:',e.message);}
+}
 
 // ── Máscara CPF ────────────────────────────────────────────────
 function sfMascaraCPF(inp){
