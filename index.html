@@ -1739,7 +1739,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy);color:var(--t
 // ══════════════════════════════════════════════
 // CONFIGURAÇÃO
 // ══════════════════════════════════════════════
-const APP_VERSION='2026-06-11-v3'; // Via Livre integrado // ← atualize esta string a cada deploy
+const APP_VERSION='2026-06-11-v5'; // Via Livre integrado // ← atualize esta string a cada deploy
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycbwNQg7oS7yITWKweCAqi0XvF8Bgn45ua7a9uVyMjPf95RsD59AQJGMwHYTAjguI-JVs/exec';
 const LS={session:'amc_rel_session',agentes:'agentesPersonalizados',rotas:'rotasPersonalizadas'};
 // Limpar sessão ao detectar nova versão — força re-login em todos os usuários
@@ -1774,7 +1774,7 @@ let rotas=JSON.parse(localStorage.getItem(LS.rotas))||["13 DE MAIO","AGUANAMBI",
 rotas=rotas.filter(r=>r!=='OUTROS');
 localStorage.setItem(LS.rotas,JSON.stringify(rotas));
 let agentes=JSON.parse(localStorage.getItem(LS.agentes))||["A. MENEZES","A. MORAIS","A. RODRIGUES","A. TEIXEIRA","ABREU","ACENIO","ADA","ADAILTON","ADNA","ADRIANA","AFONSO","AGAMENON","AIRTON","ALBERTO","ALBERTO FILHO","ALBUQUERQUE","ALCANTARA","ALENCAR","ALEX","ALEXANDRA MELO","ALINE","ALISSON","ALLAN","ALMEIDA","ALMEIDA JUNIOR","ALUIZIO","ALVES","AMELIA","AMILCAR","ANA","ANA CLAUDIA","ANACLETA","ANASTACIO","ANDRADE","ANDRE","ANDRE LUIS","ANDRE OLIVEIRA","ANDREA","ANDREZA","ANNE","ANSELMO","ANTONIO(PLINIO)","AQUILES","AQUINO","ARANDA","ARAUJO","ARILTON","ARISTIDES","ARNALDO","ARNOLDO","ARRUDA","ARTUR","ARY","AUGUSTO","AZEVEDO","B. FERREIRA","BAIMA","BARBOSA","BARREIRA","BARRETO","BARROS","BARROSO","BERKSON","BERNADETE","BERNARDO","BESSA","BIANCA","BISPO","BOCHENEK","BOMFIM","BONIFACIO","BRASIL","BRENO","BRITO","BRUNA","BYRON","C. CUNHA","CAETANO","CALDAS","CAMPOS","CANDEA","CANITO","CARDEC","CARLA RAQUEL","CARLOS JUNIOR","CARNEIRO","CAROLINA","CARVALHO","CESAR","CEZANILDO","CHAVES","CIBELY","CILMA","CINTIA GARCIA","CIRO","CLARICIANE","CLAUDENES","CLAUDIA","CLAUDIA ANDREA","CLAUDINO","CLAUDIO","CLAUDNILSON","CLEBIO","CLECIANO","CLEITON","CONCEICAO","CORREIA","COSMO","COSTA","CRIS","CRUZ","DALINY","DAMASCENO","DANIEL","DANIELLI PAZ","DANTAS","DARIO","DAVID","DE MORAIS","DEHON","DELANO","DELMA","DEMETRIO","DENISE","DIANA","DIAS","DIEGO","DIOGO","DJALMA","DUARTE","DULCE","E. COSTA","EDIAN","EDNARDO","EDNILSON","EDSON","EDVANDO NUNES","ELEINA","EMERSON ANDRADE","EMILIO CARLOS","ENEAS","EREMYLTO","ERIC","ERISTON","ERMESON","EUCLIDES","EVANDRO","EVANDRO SILVA","EVELINE","EVELYN","EWERTON","F. ALENCAR","F. ROLIM","F. SOUZA","F. SANTOS","F. VIANA","FABIANO","FABIO AUGUSTO","FABRICIO","FACANHA","FACO","FARIAS","FATIMA","FELIX","FERNANDES","FERNANDO","FERREIRA","FERRO","FLAVIANA","FLAVIO","FLAVIO ANTONIO","FONSECA","FONTELES","FONTENELE","FRANCA","FRANCINETE","FRANCISCO","FRANCISCO ANTONIO","FREIRE","FROTA","FURTADO","G. ROCHA","G. SOUSA","G. TAVARES","GABRIEL","GABRIEL OLIVEIRA","GADELHA","GALBERE","GALVAO","GARCIA","GASPAR","GEOVANA","GEOVANILDO","GERALDO BORGES","GERARDO","GERCIONE","GILBERT","GILSON","GILVAN","GLEDSON","GLEYCIANE","GOES","GONCALO","GUEDES","GUILHERME","GURGEL","GUSTAVO","HARIADYNNE","HEBERFRAN","HELANO","HELDER","HELIO","HELLEN","HENRIQUE","HERBERT","HERMES","HERNANDO","HILDA","HONORATO","HORANA","IARA","IEDA","IGOR","INACIO","INES","IRACEMA","IRI GONCALVES","ISIS","ISRAEL","IURY","IVANILTON","IZABEL","J. PORTELA","J. LOPES","J. MARCELO","J. MARQUES","J. PEIXOTO","J. SALES","J. VASCONCELOS","JAC MARREIRO","JACELIO","JACQUELINE","JADSON","JALES","JAMILLY","JANCEY","JANNE","JEFFERSON","JESOINA","JESSE","JOAMARO","JOANA","JOAO AVELINO","JOAO BEZERRA","JOAO BOSCO","JOAO DE DEUS","JOAO FILHO","JOAO GOMES","JOAO MARCOS","JOAO PAULO","JOAO RAMOS","JOAO RODRIGUES","JOAO SIRZINA","JOAO VICTOR","JONATHAN","JORGE","JORGE UCHOA","JOSE CARLOS","JOSE COSTA","JOSE EDMAR","JOSE NETO","JOSE RICARDO","JOSIANE","JULIA","JULIAO","JULIO MORAIS","JUNIOR","JUSCIE","JUSTINO","KAMILA","KARINY","KATIA","KATIA MAIA","KATIGEANE","KELBER","KLEBER","L ALVES","L. MOTA","LARA","LEANDRO","LEILA","LEONARDO LEITE","LETICIA","LEVILTON","LIMA","LINCOLN","LINDEMBERG","LINHARES","LINS","LOBO","LOPES","LOUREIRO","LUANA","LUCAS","LUCAS MARTINS","LUCAS MOURA","LUCELIO","LUCENA","LUCIANA","LUCIANO","LUIZ MESQUITA","LUIZ SILVA","LUIZ TELES","LUIZ TIAGO","LUZ","M. ALEXANDRE","M. ANJOS","M. COSTA","M. JUNIOR","M. OLIVEIRA","M. RODRIGUES","MACEDO","MACHADO","MAGALHAES","MAGNO","MANOEL","MARCELO","MARCILIO","MARCOS ANTONIO","MARDEN","MARDIA","MARIA","MARIA CRISTINA","MARIANA","MARIO","MARQUES","MARTINS","MAURO","MEDEIROS","MELO","MENDES","MENDONCA","MICHEL","MIRANDA","MIRELLA","MONTEIRO","MOREIRA","MORENO","MOURA","NARCELIO","NASCIMENTO","NATALIA","NATALIA FIRMINO","NATALIA MONTEIRO","NATHANAELY","NAZARENO","NELSON","NESTOR","NOGUEIRA","NOJOSA","NUBIA","NUNES","OLAVO JUNIOR","OLINDA","OLIVEIRA","ONAILIA","OSMAR","OTAVIO","P. NOGUEIRA","PABLO","PAULA","PAULINO","PAULO ARAUJO","PAULO CESAR","PAULO REGIS","PAULO SERGIO","PEDRO","PEDRO IVO","PEIXOTO","PEREIRA","PEREZ","PEROTE","PESSOA","PETRUS","PINHEIRO","PONTES","PORTELA","QUIXADA","R. BRAGA","R. FERREIRA","R. FILHO","R. GUEDES","R. MONTEIRO","R. SALES","R. SILVA","RABELO","RADSON","RAFAEL","RAMON","RAMOS","RAQUEL","RAUNILO","REGINALDO","REGNO","RENATA","RENATA FLORENCIO","RENATO BEZERRA","RENATO TORRES","RENNER","RIBEIRO","RICARDO JORGE","ROBENYLSON","ROBERT","ROBERTA","ROBERTO","ROBERTO FELIX","ROBSON","ROCHA","RODRIGO","RODRIGO RIGE","ROGERIO GOMES","ROLIM","ROME","ROMELIA","ROMMEL","RONALDDY","RONALDO","ROOSEWELT","ROSENO","RUBERVAL","RYAD","S. ARAUJO","S. ALVES","S. COSTA","SABOIA","SALDANHA","SALES","SAMARA","SAMPAIO","SAMUEL","SANDRA","SANTOS","SARA","SARAIVA","SERGIO","SEVERO","SHARLES","SILAS","SILVA","SIPAUBA","SOCORRO TEIXEIRA","SOLON","SOUZA","SOUZA LIMA","SULINO","SYNTIA MEIRELES","T. OLIVEIRA","TAIS TAVARES","TALES","TALITA","TARCISIO","TARCISIO FILHO","TAUANNE","TAUMATURGO","TAVARES","TEIXEIRA","TELES","TEMISTOCLES","TEMOTEO","THAIS","THAYMISSA","TICIANO","TORRES","TRAJANO","UCHOA","UNIAS","V. MARTINS","V. NUNES","VALDETARIO","VANESSA","VASCONCELOS","VENICIO SALES","VENTURA","VIANA NETO","VILMA","VINICIUS","VIRGINIA","VITORINO","VIVIANE","VLADIA","WALDEMBERG","WANDERSON","WASHINGTON","WASHINGTON LUIS","WELBER","WELLINGTON","WERBENA","WESLEY","WLADIEL","XAVIER","YVES"];
-const viaturas=Array.from({length:101},(_,i)=>`VT-${150+i}`);
+const viaturas=[...Array.from({length:101},(_,i)=>`VT-${150+i}`),...Array.from({length:51},(_,i)=>`MT-${100+i}`)];
 const motos=Array.from({length:77},(_,i)=>`MT-${174+i}`);
 const todosVeiculos=[...viaturas,...motos];
 
@@ -9483,6 +9483,22 @@ select.sf-input { text-transform: none; }
   /* Evitar travamento ao rolar — desabilitar pointer-events no overlay */
   #sfFormBody { touch-action: pan-y; }
   #telaFatais { touch-action: pan-y; }
+  /* Garantir header sempre visível */
+  #sfModalHeader {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 20 !important;
+    flex-shrink: 0 !important;
+  }
+  #sfModalBox {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  #sfFormBody {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 </style>
@@ -9525,9 +9541,9 @@ select.sf-input { text-transform: none; }
   <div id="sfModalBox" style="background:var(--surface2);border:1px solid var(--border2);border-radius:16px 16px 0 0;width:100%;max-width:700px;height:94vh;max-height:94vh;overflow-y:auto;display:flex;flex-direction:column;position:relative;margin:0;">
 
     <!-- Cabeçalho -->
-    <div style="position:sticky;top:0;z-index:10;background:linear-gradient(135deg,#7f0000,#c62828);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-radius:16px 16px 0 0;">
+    <div id="sfModalHeader" style="position:sticky;top:0;z-index:20;background:linear-gradient(135deg,#7f0000,#c62828);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-radius:16px 16px 0 0;flex-shrink:0;">
       <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:16px;letter-spacing:2px;text-transform:uppercase;color:#fff;" id="sfModalTit">⚠ NOVO SINISTRO FATAL</div>
-      <button onclick="sfFecharModal()" style="background:rgba(255,255,255,0.15);border:none;border-radius:8px;width:32px;height:32px;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+      <button onclick="sfFecharModal()" style="background:rgba(255,255,255,0.15);border:none;border-radius:8px;width:36px;height:36px;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
     </div>
 
     <div id="sfFormBody" style="padding:14px 16px 24px;display:flex;flex-direction:column;gap:0;">
@@ -10181,20 +10197,48 @@ function sfAddEnvolvido(e={}) {
   sfEnvolvidosAtivos.push(id); sfEnvolvidosInfo[id]={nome:e.nome||''};
   const c=document.getElementById('sfEnvolvidosContainer');
   const d=document.createElement('div'); d.className='sf-item'; d.dataset.envolvidoId=id;
+  // Calcular visibilidade inicial
+  const vinc=e.vinculo||'PEDESTRE';
+  const isAnimal=vinc==='ANIMAL';
+  const isNaoId=vinc==='NÃO IDENTIFICADO';
+  const isPessoa=!isAnimal&&!isNaoId;
   d.innerHTML=`<button class="sf-btnrem" onclick="sfRemEnvolvido(this,${id})"><i class="fas fa-trash"></i></button>
     <div class="sf-item-tit">Envolvido ${id}</div>
     <label class="sf-label">Vinculação</label>
-    <select class="sf-input e-vinc" onchange="sfToggleCamposEnv(this)">
-      <option value="PEDESTRE"${(e.vinculo||'PEDESTRE')==='PEDESTRE'?' selected':''}>Pedestre</option>
-      <option value="ANIMAL"${e.vinculo==='ANIMAL'?' selected':''}>Animal</option>
-      <option value="NÃO IDENTIFICADO"${e.vinculo==='NÃO IDENTIFICADO'?' selected':''}>Não Identificado</option>
+    <select class="sf-input e-vinc" onchange="sfToggleCamposEnv(this);sfAtualizarEnvInfo(${id})">
+      <option value="PEDESTRE"${vinc==='PEDESTRE'?' selected':''}>Pedestre</option>
+      <option value="ANIMAL"${vinc==='ANIMAL'?' selected':''}>Animal</option>
+      <option value="NÃO IDENTIFICADO"${vinc==='NÃO IDENTIFICADO'?' selected':''}>Não Identificado</option>
       ${sfGetVeicOpts()}
     </select>
-    <div class="campos-animal campo-oculto" style="display:none;">
-      <label class="sf-label">Tipo de Animal</label><input type="text" class="sf-input e-animal" placeholder="CACHORRO, CAVALO..." value="${e.animal||''}">
+    <div class="campos-animal campo-oculto" style="${isAnimal?'':'display:none;'}">
+      <label class="sf-label">Tipo de Animal</label>
+      <input type="text" class="sf-input e-animal" placeholder="CACHORRO, CAVALO..." value="${e.animal||''}">
     </div>
-    <div class="campos-pessoa${(e.vinculo==='ANIMAL'||e.vinculo==='NÃO IDENTIFICADO')?' campo-oculto':''}" style="${(e.vinculo==='ANIMAL'||e.vinculo==='NÃO IDENTIFICADO')?'display:none;':''}">onchange="sfAtualizarEnvInfo(${id})">
-      <div class="sf-row"><div><label class="sf-label">RG</label><input type="text" class="sf-input e-rg" inputmode="numeric" maxlength="20" oninput="this.value=this.value.replace(/\D/g,'')" value="${e.rg||''}"></div><div><label class="sf-label">CPF</label><input type="text" class="sf-input e-cpf" inputmode="numeric" maxlength="14" oninput="sfMascaraCPF(this)" value="${e.cpf||''}"></div></div>
+    <div class="campos-condicao" style="display:block;">
+      <label class="sf-label">Condição</label>
+      <select class="sf-input e-condicao">
+        <option value="VÍTIMA FATAL"${(e.condicao||'')==='VÍTIMA FATAL'?' selected':''}>Vítima Fatal</option>
+        <option value="FERIDO GRAVE"${e.condicao==='FERIDO GRAVE'?' selected':''}>Ferido Grave</option>
+        <option value="FERIDO LEVE"${e.condicao==='FERIDO LEVE'?' selected':''}>Ferido Leve</option>
+        <option value="ILESO"${e.condicao==='ILESO'?' selected':''}>Ileso</option>
+      </select>
+    </div>
+    <div class="campos-nao-id campo-oculto" style="${isNaoId?'':'display:none;'}">
+      <label class="sf-label">Tipo</label>
+      <select class="sf-input e-tipo-nid">
+        <option value="CONDUTOR"${(e.tipo||'')==='CONDUTOR'?' selected':''}>Condutor</option>
+        <option value="PASSAGEIRO"${e.tipo==='PASSAGEIRO'?' selected':''}>Passageiro</option>
+        <option value="PEDESTRE"${e.tipo==='PEDESTRE'?' selected':''}>Pedestre</option>
+      </select>
+    </div>
+    <div class="campos-pessoa campo-oculto" style="${isPessoa?'':'display:none;'}">
+      <label class="sf-label">Nome</label>
+      <input type="text" class="sf-input e-nome" value="${e.nome||''}" onchange="sfAtualizarEnvInfo(${id})">
+      <div class="sf-row">
+        <div><label class="sf-label">RG</label><input type="text" class="sf-input e-rg" inputmode="numeric" maxlength="20" oninput="this.value=this.value.replace(/\\D/g,'')" value="${e.rg||''}"></div>
+        <div><label class="sf-label">CPF</label><input type="text" class="sf-input e-cpf" inputmode="numeric" maxlength="14" oninput="sfMascaraCPF(this)" value="${e.cpf||''}"></div>
+      </div>
       <div class="sf-row">
         <div>
           <label class="sf-label">Nasc. (DD/MM/AAAA)</label>
@@ -10206,99 +10250,19 @@ function sfAddEnvolvido(e={}) {
         </div>
         <div><label class="sf-label">Idade</label><input type="text" class="sf-input e-idade" placeholder="Automática" value="${e.idade||''}"></div>
       </div>
-      <div class="sf-row"><div><label class="sf-label">CNH</label><input type="text" class="sf-input e-cnh" value="${e.cnh||''}"></div><div><label class="sf-label">Categoria</label><input type="text" class="sf-input e-cat" placeholder="A/B" value="${e.categoria||''}"></div></div>
+      <div class="sf-row">
+        <div><label class="sf-label">CNH</label><input type="text" class="sf-input e-cnh" value="${e.cnh||''}"></div>
+        <div><label class="sf-label">Categoria</label><input type="text" class="sf-input e-cat" placeholder="A/B" value="${e.categoria||''}"></div>
+      </div>
       <label class="sf-label">Tipo</label>
-      <select class="sf-input e-tipo"><option value="CONDUTOR"${(e.tipo||'')==='CONDUTOR'?' selected':''}>Condutor</option><option value="PASSAGEIRO"${e.tipo==='PASSAGEIRO'?' selected':''}>Passageiro</option><option value="PEDESTRE"${e.tipo==='PEDESTRE'?' selected':''}>Pedestre</option></select>
-      <label class="sf-label">Condição</label>
-      <select class="sf-input e-condicao"><option value="VÍTIMA FATAL"${(e.condicao||'')==='VÍTIMA FATAL'?' selected':''}>Vítima Fatal</option><option value="FERIDO GRAVE"${e.condicao==='FERIDO GRAVE'?' selected':''}>Ferido Grave</option><option value="FERIDO LEVE"${e.condicao==='FERIDO LEVE'?' selected':''}>Ferido Leve</option><option value="ILESO"${e.condicao==='ILESO'?' selected':''}>Ileso</option></select>
+      <select class="sf-input e-tipo">
+        <option value="CONDUTOR"${(e.tipo||'')==='CONDUTOR'?' selected':''}>Condutor</option>
+        <option value="PASSAGEIRO"${e.tipo==='PASSAGEIRO'?' selected':''}>Passageiro</option>
+        <option value="PEDESTRE"${e.tipo==='PEDESTRE'?' selected':''}>Pedestre</option>
+      </select>
     </div>`;
   c.appendChild(d);
   sfAtualizarFatores(); sfAtualizarTestes();
-}
-function sfCalcIdade(inp){const item=inp.closest('.sf-item');if(!inp.value)return;const[ano,mes,dia]=inp.value.split('-').map(Number);const hj=new Date();let id=hj.getFullYear()-ano;if(hj.getMonth()+1<mes||(hj.getMonth()+1===mes&&hj.getDate()<dia))id--;item.querySelector('.e-nasc').value=`${String(dia).padStart(2,'0')}/${String(mes).padStart(2,'0')}/${ano}`;item.querySelector('.e-idade').value=id;}
-function sfSincNasc(inp){let v=inp.value.replace(/\D/g,'');if(v.length>=2)v=v.substring(0,2)+'/'+v.substring(2);if(v.length>=5)v=v.substring(0,5)+'/'+v.substring(5,9);inp.value=v;if(v.length===10){const[d,m,a]=v.split('/').map(Number);if(d&&m&&a&&a>1900){const item=inp.closest('.sf-item');const hj=new Date();let id=hj.getFullYear()-a;if(hj.getMonth()+1<m||(hj.getMonth()+1===m&&hj.getDate()<d))id--;item.querySelector('.e-idade').value=id;item.querySelector('.e-nasc-date').value=`${a}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;}}}
-function sfToggleCamposEnv(sel){
-  const item=sel.closest('.sf-item');
-  const isAnimal=sel.value==='ANIMAL';
-  const isNaoId=sel.value==='NÃO IDENTIFICADO';
-  const isPessoa=!isAnimal&&!isNaoId;
-  const animalDiv=item.querySelector('.campos-animal');
-  const pessoaDiv=item.querySelector('.campos-pessoa');
-  if(animalDiv){animalDiv.style.display=isAnimal?'block':'none';animalDiv.classList.toggle('campo-oculto',!isAnimal);}
-  if(pessoaDiv){pessoaDiv.style.display=isPessoa?'block':'none';pessoaDiv.classList.toggle('campo-oculto',!isPessoa);}
-  sfAtualizarFatores();
-}
-function sfAtualizarEnvInfo(id){const item=document.querySelector(`[data-envolvido-id="${id}"]`);if(!item)return;sfEnvolvidosInfo[id]={nome:item.querySelector('.e-nome').value};sfAtualizarFatores();sfAtualizarTestes();}
-function sfRemEnvolvido(btn,id){if(!confirm('Remover envolvido?'))return;btn.parentElement.remove();sfEnvolvidosAtivos=sfEnvolvidosAtivos.filter(e=>e!==id);delete sfEnvolvidosInfo[id];sfAtualizarFatores();sfAtualizarTestes();}
-
-// Vinculação dos envolvidos ao veículo
-function sfAtualizarVinc(){document.querySelectorAll('#sfEnvolvidosContainer .e-vinc').forEach(s=>{const v=s.value;s.innerHTML=`<option value="PEDESTRE">Pedestre</option><option value="ANIMAL">Animal</option><option value="NÃO IDENTIFICADO">Não Identificado</option>${sfGetVeicOpts()}`;if(v)s.value=v;});}
-
-// Fatores por envolvido (5.1)
-function sfAtualizarFatores(){
-  const c=document.getElementById('sfFatoresContainer');
-  const salvos={};
-  c.querySelectorAll('[data-fator-id]').forEach(el=>{const id=el.dataset.fatorId;const cap=el.querySelector(`input[name="sfCap-${id}"]:checked`);const cin=el.querySelector(`input[name="sfCin-${id}"]:checked`);salvos[id]={cap:cap?.value,cin:cin?.value};});
-  c.innerHTML='';
-  document.querySelectorAll('#sfEnvolvidosContainer .sf-item').forEach(env=>{
-    const vinc=env.querySelector('.e-vinc')?.value;
-    const id=env.dataset.envolvidoId;
-    if(vinc==='ANIMAL'||vinc==='NÃO IDENTIFICADO')return;
-    const info=sfEnvolvidosInfo[id];
-    const label=info?.nome?`Envolvido ${id} — ${info.nome}`:`Envolvido ${id}`;
-    const s=salvos[id]||{};
-    const div=document.createElement('div');div.className='sf-subsec';div.dataset.fatorId=id;
-    div.innerHTML=`<div class="sf-subsec-tit"><i class="fas fa-user"></i> ${label}</div>
-      <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Capacete:</div>
-      <div class="sf-radio-group">${['SIM','NÃO','SEM INFORMAÇÃO','N/A'].map(v=>`<label class="sf-radio-label"><input type="radio" name="sfCap-${id}" value="${v}"${(s.cap||'N/A')===v?' checked':''}> ${v}</label>`).join('')}</div>
-      <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin:8px 0 4px;">Cinto de Segurança:</div>
-      <div class="sf-radio-group">${['SIM','NÃO','SEM INFORMAÇÃO','N/A'].map(v=>`<label class="sf-radio-label"><input type="radio" name="sfCin-${id}" value="${v}"${(s.cin||'N/A')===v?' checked':''}> ${v}</label>`).join('')}</div>`;
-    c.appendChild(div);
-  });
-}
-
-// Condições dos veículos (5.6)
-function sfAtualizarCondVeic(){
-  const c=document.getElementById('sfCondicoesVeicContainer');
-  const existentes={};
-  if(c)c.querySelectorAll('[data-veic-cond]').forEach(el=>{existentes[el.dataset.veicCond]=el.querySelector('textarea').value;});
-  if(c)c.innerHTML='';
-  if(!sfVeiculosAtivos.length){if(c)c.innerHTML='<p style="color:var(--text3);font-size:12px;margin:4px 0;">Adicione veículos na seção 2.</p>';return;}
-  sfVeiculosAtivos.forEach(id=>{
-    const inf=sfVeiculosInfo[id];
-    const lab=inf&&(inf.tipo||inf.placa)?`Veículo ${id} (${inf.tipo}${inf.placa?' - '+inf.placa:''})` :`Veículo ${id}`;
-    const div=document.createElement('div');div.dataset.veicCond=id;div.style.marginBottom='8px';
-    div.innerHTML=`<label class="sf-label">${lab}</label><textarea class="sf-input" rows="2" placeholder="CONDIÇÕES DO VEÍCULO, PNEUS, FREIOS, LUZES...">${existentes[id]||''}</textarea>`;
-    if(c)c.appendChild(div);
-  });
-}
-
-// ── DRV / Testes / Docs ───────────────────────────────────────
-function sfAddDRV(d={}) {
-  const div=document.createElement('div');div.className='sf-item';
-  div.innerHTML=`<button class="sf-btnrem" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>
-    <div class="sf-row"><div><label class="sf-label">Veículo</label><select class="sf-input drv-veiculo"><option value="">Selecione</option>${sfGetVeicOptsSimples()}</select></div><div><label class="sf-label">Número DRV</label><input type="text" class="sf-input drv-numero" value="${d.numero||''}"></div></div>`;
-  document.getElementById('sfDRVContainer').appendChild(div);
-  if(d.veiculo) div.querySelector('.drv-veiculo').value=d.veiculo;
-}
-function sfAtualizarDRVs(){document.querySelectorAll('#sfDRVContainer .drv-veiculo').forEach(s=>{const v=s.value;s.innerHTML='<option value="">Selecione</option>'+sfGetVeicOptsSimples();if(v)s.value=v;});}
-
-function sfAddTeste(t={}) {
-  const div=document.createElement('div');div.className='sf-item';
-  div.innerHTML=`<button class="sf-btnrem" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>
-    <div class="sf-row"><div><label class="sf-label">Envolvido</label><select class="sf-input teste-envolvido"><option value="">Selecione</option>${sfGetEnvOpts()}</select></div><div><label class="sf-label">Número Teste</label><input type="text" class="sf-input" value="${t.numero||''}"></div></div>
-    <label class="sf-label">Resultado</label>
-    <select class="sf-input teste-resultado"><option value="NEGATIVO"${(t.resultado||'')==='NEGATIVO'?' selected':''}>Negativo</option><option value="POSITIVO"${t.resultado==='POSITIVO'?' selected':''}>Positivo</option><option value="RECUSOU"${t.resultado==='RECUSOU'?' selected':''}>Recusou</option><option value="NÃO REALIZADO"${t.resultado==='NÃO REALIZADO'?' selected':''}>Não Realizado</option></select>`;
-  document.getElementById('sfTesteContainer').appendChild(div);
-  if(t.envolvido) div.querySelector('.teste-envolvido').value=t.envolvido;
-}
-function sfAtualizarTestes(){document.querySelectorAll('#sfTesteContainer .teste-envolvido').forEach(s=>{const v=s.value;s.innerHTML='<option value="">Selecione</option>'+sfGetEnvOpts();if(v)s.value=v;});}
-
-function sfAddDoc(d={}) {
-  const div=document.createElement('div');div.className='sf-item';
-  div.innerHTML=`<button class="sf-btnrem" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>
-    <div class="sf-row"><div><label class="sf-label">Tipo</label><input type="text" class="sf-input" placeholder="LAUDO, BO..." value="${d.tipo||''}"></div><div><label class="sf-label">Número</label><input type="text" class="sf-input" value="${d.numero||''}"></div></div>`;
-  document.getElementById('sfDocContainer').appendChild(div);
 }
 
 // ── Testemunhas ───────────────────────────────────────────────
@@ -10432,6 +10396,20 @@ function sfMascaraCPF(inp){
   inp.value=v;
 }
 
+function sfToggleCamposEnv(sel){
+  const item=sel.closest('.sf-item');
+  const isAnimal=sel.value==='ANIMAL';
+  const isNaoId=sel.value==='NÃO IDENTIFICADO';
+  const isPessoa=!isAnimal&&!isNaoId;
+  const show=(el,vis)=>{if(el){el.style.display=vis?'block':'none';el.classList.toggle('campo-oculto',!vis);}};
+  show(item.querySelector('.campos-animal'), isAnimal);
+  show(item.querySelector('.campos-pessoa'), isPessoa);
+  show(item.querySelector('.campos-nao-id'), isNaoId);
+  const condDiv=item.querySelector('.campos-condicao');
+  if(condDiv) condDiv.style.display='block';
+  sfAtualizarFatores();
+}
+
 // ── Toggles ───────────────────────────────────────────────────
 function sfToggleOutroTipo(){const v=document.getElementById('sfTipo').value;document.getElementById('sfTipoOutroWrap').style.display=v==='OUTROS'?'block':'none';}
 function sfToggleCameraOrigem(){const v=document.querySelector('input[name="sfCameras"]:checked')?.value;document.getElementById('sfCameraOrigemWrap').style.display=v==='SIM'?'block':'none';}
@@ -10460,8 +10438,13 @@ function sfColetarDados() {
   const envolvidos=sfEnvolvidosAtivos.map(id=>{
     const item=document.querySelector(`[data-envolvido-id="${id}"]`);if(!item)return null;
     const fat=document.querySelector(`[data-fator-id="${id}"]`);
+    const vinculo=item.querySelector('.e-vinc')?.value||'';
+    const isNaoId=vinculo==='NÃO IDENTIFICADO';
+    const isAnimal=vinculo==='ANIMAL';
+    // tipo: pessoa=e-tipo, não-id=e-tipo-nid
+    const tipoEl=isNaoId?item.querySelector('.e-tipo-nid'):item.querySelector('.e-tipo');
     return{
-      vinculo:item.querySelector('.e-vinc')?.value||'',
+      vinculo,
       animal:item.querySelector('.e-animal')?.value||'',
       nome:item.querySelector('.e-nome')?.value||'',
       rg:item.querySelector('.e-rg')?.value||'',
@@ -10470,7 +10453,7 @@ function sfColetarDados() {
       idade:item.querySelector('.e-idade')?.value||'',
       cnh:item.querySelector('.e-cnh')?.value||'',
       categoria:item.querySelector('.e-cat')?.value||'',
-      tipo:item.querySelector('.e-tipo')?.value||'CONDUTOR',
+      tipo:tipoEl?.value||'CONDUTOR',
       condicao:item.querySelector('.e-condicao')?.value||'VÍTIMA FATAL',
       capacete:fat?fat.querySelector(`input[name="sfCap-${id}"]:checked`)?.value||'N/A':'N/A',
       cinto:fat?fat.querySelector(`input[name="sfCin-${id}"]:checked`)?.value||'N/A':'N/A',
