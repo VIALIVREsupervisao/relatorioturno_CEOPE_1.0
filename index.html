@@ -9442,11 +9442,17 @@ select.sf-input { text-transform: none; }
 }
 .sf-card:active { transform: scale(0.99); }
 @keyframes fadeinUp { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
-@media (max-width: 600px) {
-  .sf-row { grid-template-columns: 1fr; }
+@media (max-width: 768px) {
+  .sf-row  { grid-template-columns: 1fr; }
   .sf-row3 { grid-template-columns: 1fr 1fr; }
   .sf-ck-grid { grid-template-columns: 1fr; }
   .sf-img-grid { grid-template-columns: 1fr 1fr; }
+  .sf-input { font-size: 16px !important; padding: 12px !important; }
+  .sf-add-btn, .sf-add-btn-blue { width: 100%; padding: 12px; font-size: 14px; }
+  .sf-btnrem { padding: 6px 10px; }
+  .sf-item, .sf-item-blue { padding: 12px 12px 12px 12px; }
+  .sf-img-slot { min-height: 120px; }
+  #sfModalBox { border-radius: 0 !important; height: 100vh !important; max-height: 100vh !important; }
 }
 
 </style>
@@ -9763,17 +9769,35 @@ document.addEventListener('input', function(e){
 
 // ── API ───────────────────────────────────────────────────────
 async function apiFatais(action, payload) {
-  const r = await fetch(SF_URL + '?action=' + encodeURIComponent(action), {
-    method: 'POST',
-    body: JSON.stringify(payload),
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    redirect: 'follow'
-  });
-  if (!r.ok) throw new Error('Erro HTTP ' + r.status);
+  const url = SF_URL + '?action=' + encodeURIComponent(action);
+  let r;
+  try {
+    r = await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      redirect: 'follow',
+      mode: 'cors'
+    });
+  } catch(fetchErr) {
+    // Fallback: tentar sem mode cors (file://)
+    r = await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      redirect: 'follow'
+    });
+  }
   const text = await r.text();
+  console.log('[SF] apiFatais raw response ('+action+'):', text.substring(0,500));
+  const clean = text.replace(/^[\s﻿​]+/, '').trim();
   let d;
-  try { d = JSON.parse(text); } catch(e) { throw new Error('Resposta inválida do servidor: ' + text.substring(0,100)); }
-  if (d.error) throw new Error(d.error);
+  try { d = JSON.parse(clean); }
+  catch(e) {
+    console.error('[SF] JSON parse falhou. Resposta bruta:', text.substring(0,500));
+    throw new Error('Resposta inesperada. Veja o console F12.');
+  }
+  if (d && d.error) throw new Error(d.error);
   return d;
 }
 
@@ -9799,11 +9823,14 @@ async function sfCarregar(manual=false) {
     const iso=sfIso(sfCurrentDate);
     const filtro = G.role==='supervisor' ? {data:iso, savedBy:G.name} : {data:iso};
     const r = await apiFatais('getSinistrosFatais', filtro);
-    sfListaData = r.data||[];
-    sfCardAberto = null; // resetar card expandido ao recarregar
+    console.log('[SF] getSinistrosFatais resposta:', r);
+    // Aceitar tanto {data:[...]} quanto {success:true, data:[...]}
+    sfListaData = (r && (r.data || r.result || [])) || [];
+    console.log('[SF] registros carregados:', sfListaData.length, sfListaData);
+    sfCardAberto = null;
     sfRenderLista();
-    if(info) info.textContent='Atualizado '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-    if(manual) toast('Lista atualizada.','ok');
+    if(info) info.textContent='Atualizado '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+' ('+sfListaData.length+'reg)';
+    if(manual) toast('Lista atualizada. '+sfListaData.length+' registro(s).','ok');
   } catch(e) {
     if(info) info.textContent='⚠ Erro';
     toast('Erro ao carregar: '+e.message,'err');
