@@ -1739,7 +1739,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy);color:var(--t
 // ══════════════════════════════════════════════
 // CONFIGURAÇÃO
 // ══════════════════════════════════════════════
-const APP_VERSION='2026-06-02-v1'; // Via Livre integrado // ← atualize esta string a cada deploy
+const APP_VERSION='2026-06-11-v1'; // Via Livre integrado // ← atualize esta string a cada deploy
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycbwNQg7oS7yITWKweCAqi0XvF8Bgn45ua7a9uVyMjPf95RsD59AQJGMwHYTAjguI-JVs/exec';
 const LS={session:'amc_rel_session',agentes:'agentesPersonalizados',rotas:'rotasPersonalizadas'};
 // Limpar sessão ao detectar nova versão — força re-login em todos os usuários
@@ -9351,9 +9351,21 @@ function srvCm(id) { var el=document.getElementById(id); if(el)el.classList.remo
 }
 .sf-label {
   font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
-  color: var(--text3); display: block; margin-bottom: 4px; margin-top: 8px;
+  color: #94a3b8; display: block; margin-bottom: 4px; margin-top: 8px;
   padding-left: 7px; border-left: 2px solid #c62828;
 }
+body.light-mode .sf-label { color: #374151; }
+.sf-input::placeholder { color: #64748b; }
+body.light-mode .sf-input::placeholder { color: #9ca3af; }
+body.light-mode .sf-input { color: #1e293b; background: #f8fafc; border-color: #cbd5e1; }
+body.light-mode .sf-input:focus { border-color: #c62828; background: #fff; }
+body.light-mode .sf-section-title { color: #c62828; }
+body.light-mode .sf-item { background: rgba(198,40,40,0.05); }
+body.light-mode .sf-item-blue { background: rgba(59,130,246,0.05); }
+body.light-mode .sf-subsec { background: #f8fafc; border-color: #e2e8f0; }
+body.light-mode .sf-card { background: #fff; border-color: #e2e8f0; }
+body.light-mode .sf-ck-item { background: #f8fafc; border-color: #e2e8f0; color: #1e293b; }
+body.light-mode .sf-ck-item:has(input:checked) { background: rgba(198,40,40,0.08); border-color: #c62828; }
 .sf-input {
   width: 100%; padding: 10px 12px; background: var(--surface3);
   border: 1.5px solid var(--border); border-radius: 8px; color: var(--text);
@@ -10047,11 +10059,45 @@ function sfPreencherForm(s) {
   (s.veiculos||[]).forEach(v=>sfAddVeiculo(v));
   (s.envolvidos||[]).forEach(e=>sfAddEnvolvido(e));
   (s.testemunhas||[]).forEach(t=>sfAddTestemunha(t));
+  // Seção 6: Documentação
   (s.drv||[]).forEach(d=>sfAddDRV(d));
   (s.testes||[]).forEach(t=>sfAddTeste(t));
   (s.docs||[]).forEach(d=>sfAddDoc(d));
+  // Seção 7: Órgãos de Apoio
   const orgContainers={amc:'sfAmcContainer',pefoce:'sfPefoceContainer',pm:'sfPmContainer',samu:'sfSamuContainer',rabecao:'sfRabecaoContainer',outros:'sfOutrosContainer'};
   Object.entries(orgContainers).forEach(([tipo,cid])=>{(s.orgaos&&s.orgaos[tipo]||[]).forEach(o=>sfAddOrgao(tipo,o));});
+  // Seção 5: campos textuais extras que podem não ter sido mapeados
+  const camposExtras={
+    sfDetPavimento:'detPavimento', sfDetSin:'detSin',
+    sfVelocidade:'velocidade', sfExcVel:'excVelocidade',
+    sfOutrosFatores:'outrosFatores', sfBoat:'boat',
+    sfObservacoes:'observacoes', sfCameraOrigem:'cameraOrigem',
+    sfLogradouro:'logradouro', sfNumero:'numero', sfBairro:'bairro',
+    sfDinamica:'dinamica'
+  };
+  Object.entries(camposExtras).forEach(([domId,dataKey])=>{
+    const el=document.getElementById(domId);
+    if(el&&s[dataKey]!==undefined&&s[dataKey]!==null) el.value=s[dataKey]||'';
+  });
+  // Restaurar radios que podem ter sido resetados
+  if(s.radar){const rv=document.querySelector('input[name="sfRadar"][value="'+s.radar+'"]');if(rv)rv.checked=true;}
+  if(s.cameras){const rc=document.querySelector('input[name="sfCameras"][value="'+s.cameras+'"]');if(rc)rc.checked=true;if(s.cameras==='SIM')document.getElementById('sfCameraOrigemWrap').style.display='block';}
+  if(s.tipoSinaliz){const rs=document.querySelector('input[name="sfTipoSinaliz"][value="'+s.tipoSinaliz+'"]');if(rs)rs.checked=true;}
+  if(s.tipoVestigio){const rt=document.querySelector('input[name="sfTipoVestigio"][value="'+s.tipoVestigio+'"]');if(rt)rt.checked=true;document.getElementById('sfTipoVestigiosWrap').style.display='block';}
+  if(s.vestigioOutro){const ev=document.getElementById('sfVestigioOutro');if(ev){ev.value=s.vestigioOutro;ev.style.display='block';}}
+  // Restaurar toggles visuais
+  if(s.checkboxes&&s.checkboxes.ck_sinalizacao_deficiente)document.getElementById('sfDetSinWrap').style.display='block';
+  if(s.checkboxes&&s.checkboxes.ck_sinalizacao_bom_estado)document.getElementById('sfConservSinWrap').style.display='block';
+  if(s.checkboxes&&s.checkboxes.ck_vestigios)document.getElementById('sfTipoVestigiosWrap').style.display='block';
+  // Seção 5.6: Condições dos veículos (restaurar após addVeiculo ter criado os containers)
+  if(s.condicoesVeic&&Object.keys(s.condicoesVeic).length){
+    setTimeout(()=>{
+      Object.entries(s.condicoesVeic).forEach(([id,val])=>{
+        const el=document.querySelector(`[data-veic-cond="${id}"] textarea`);
+        if(el&&val)el.value=val;
+      });
+    },50);
+  }
   // Imagens (URLs do Drive)
   (s.imagens||[]).forEach((url,i)=>{if(i<8&&url&&!url.startsWith('data:')){sfImgs[i]=url;sfAtualizarSlot(i,'url');}});
 }
@@ -10126,7 +10172,7 @@ function sfAddEnvolvido(e={}) {
     </div>
     <div class="campos-pessoa${e.vinculo==='ANIMAL'||e.vinculo==='NÃO IDENTIFICADO'?' campo-oculto':''}">
       <label class="sf-label">Nome</label><input type="text" class="sf-input e-nome" value="${e.nome||''}" onchange="sfAtualizarEnvInfo(${id})">
-      <div class="sf-row"><div><label class="sf-label">RG</label><input type="text" class="sf-input e-rg" value="${e.rg||''}"></div><div><label class="sf-label">CPF</label><input type="text" class="sf-input e-cpf" value="${e.cpf||''}"></div></div>
+      <div class="sf-row"><div><label class="sf-label">RG</label><input type="text" class="sf-input e-rg" inputmode="numeric" maxlength="20" oninput="this.value=this.value.replace(/\D/g,'')" value="${e.rg||''}"></div><div><label class="sf-label">CPF</label><input type="text" class="sf-input e-cpf" inputmode="numeric" maxlength="14" oninput="sfMascaraCPF(this)" value="${e.cpf||''}"></div></div>
       <div class="sf-row">
         <div>
           <label class="sf-label">Nasc. (DD/MM/AAAA)</label>
@@ -10149,7 +10195,14 @@ function sfAddEnvolvido(e={}) {
 }
 function sfCalcIdade(inp){const item=inp.closest('.sf-item');if(!inp.value)return;const[ano,mes,dia]=inp.value.split('-').map(Number);const hj=new Date();let id=hj.getFullYear()-ano;if(hj.getMonth()+1<mes||(hj.getMonth()+1===mes&&hj.getDate()<dia))id--;item.querySelector('.e-nasc').value=`${String(dia).padStart(2,'0')}/${String(mes).padStart(2,'0')}/${ano}`;item.querySelector('.e-idade').value=id;}
 function sfSincNasc(inp){let v=inp.value.replace(/\D/g,'');if(v.length>=2)v=v.substring(0,2)+'/'+v.substring(2);if(v.length>=5)v=v.substring(0,5)+'/'+v.substring(5,9);inp.value=v;if(v.length===10){const[d,m,a]=v.split('/').map(Number);if(d&&m&&a&&a>1900){const item=inp.closest('.sf-item');const hj=new Date();let id=hj.getFullYear()-a;if(hj.getMonth()+1<m||(hj.getMonth()+1===m&&hj.getDate()<d))id--;item.querySelector('.e-idade').value=id;item.querySelector('.e-nasc-date').value=`${a}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;}}}
-function sfToggleCamposEnv(sel){const item=sel.closest('.sf-item');item.querySelector('.campos-animal').classList.toggle('campo-oculto',sel.value!=='ANIMAL');item.querySelector('.campos-pessoa').classList.toggle('campo-oculto',sel.value==='ANIMAL'||sel.value==='NÃO IDENTIFICADO');sfAtualizarFatores();}
+function sfToggleCamposEnv(sel){
+  const item=sel.closest('.sf-item');
+  const isAnimal=sel.value==='ANIMAL';
+  const isPedOrVeic=!isAnimal&&sel.value!=='NÃO IDENTIFICADO';
+  item.querySelector('.campos-animal').classList.toggle('campo-oculto',!isAnimal);
+  item.querySelector('.campos-pessoa').classList.toggle('campo-oculto',!isPedOrVeic);
+  sfAtualizarFatores();
+}
 function sfAtualizarEnvInfo(id){const item=document.querySelector(`[data-envolvido-id="${id}"]`);if(!item)return;sfEnvolvidosInfo[id]={nome:item.querySelector('.e-nome').value};sfAtualizarFatores();sfAtualizarTestes();}
 function sfRemEnvolvido(btn,id){if(!confirm('Remover envolvido?'))return;btn.parentElement.remove();sfEnvolvidosAtivos=sfEnvolvidosAtivos.filter(e=>e!==id);delete sfEnvolvidosInfo[id];sfAtualizarFatores();sfAtualizarTestes();}
 
@@ -10245,7 +10298,8 @@ function sfAddOrgao(tipo,v={}) {
   const d=document.createElement('div');d.className='sf-item';
   let h=`<button class="sf-btnrem" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>`;
   if(tipo==='amc'){
-    h+=`<label class="sf-label">Viatura</label><input type="text" class="sf-input orgao-viatura" placeholder="VT-163" value="${v.viatura||v.vtr||''}"><label class="sf-label">Agentes</label><input type="text" class="sf-input orgao-info" placeholder="NOME DOS AGENTES" value="${v.agentes||''}">`;
+    const uid='sfamc'+Date.now()+Math.random().toString(36).slice(2,5);
+    h+=`<label class="sf-label">Viatura</label><div style="position:relative;"><input type="text" class="sf-input orgao-viatura" id="${uid}-vtr" placeholder="VT-163" autocomplete="off" value="${v.viatura||v.vtr||''}" oninput="sfAmcSugestVtr(this)" onblur="sfAmcFecharSug(this)" onfocus="sfAmcSugestVtr(this)"></div><label class="sf-label">Agentes</label><div style="position:relative;"><input type="text" class="sf-input orgao-info" id="${uid}-ag" placeholder="Nomes dos agentes..." autocomplete="off" value="${v.agentes||''}" oninput="sfAmcSugestAg(this)" onblur="sfAmcFecharSug(this)"></div>`;
   } else if(tipo==='pefoce'){
     h+=`<label class="sf-label">Viatura</label><input type="text" class="sf-input orgao-viatura" placeholder="VTR-7121" value="${v.viatura||v.vtr||''}"><label class="sf-label">Perito</label><input type="text" class="sf-input orgao-perito" value="${v.perito||''}"><label class="sf-label">Motorista</label><input type="text" class="sf-input orgao-motorista" value="${v.motorista||''}">`;
   } else if(tipo==='pm'){
@@ -10258,6 +10312,70 @@ function sfAddOrgao(tipo,v={}) {
     h+=`<label class="sf-label">Órgão</label><input type="text" class="sf-input orgao-nome" value="${v.nome||v.orgao||''}"><label class="sf-label">Informações</label><input type="text" class="sf-input orgao-info" value="${v.agentes||v.info||''}">`;
   }
   d.innerHTML=h; c.appendChild(d);
+}
+
+// ── Sugestões AMC ─────────────────────────────────────────────
+function sfAmcSugestVtr(inp){
+  sfAmcFecharSug(inp);
+  const val=(inp.value||'').toUpperCase().trim();
+  // Usa array viaturas do sistema principal
+  const all=typeof viaturas!=='undefined'?viaturas:[];
+  const fil=val?all.filter(v=>v.toUpperCase().startsWith(val)):all.slice(0,15);
+  if(!fil.length)return;
+  const sug=document.createElement('div');
+  sug.className='suggestions';
+  sug.style.cssText='position:absolute;top:100%;left:0;right:0;z-index:9999;max-height:160px;overflow-y:auto;';
+  sug.innerHTML='<ul>'+fil.slice(0,15).map(v=>'<li>'+v+'</li>').join('')+'</ul>';
+  inp.parentElement.style.position='relative';
+  inp.parentElement.appendChild(sug);
+  inp._sfSug=sug;
+  sug.querySelectorAll('li').forEach(li=>{
+    li.addEventListener('mousedown',e=>{e.preventDefault();inp.value=li.textContent.trim();sug.remove();inp._sfSug=null;});
+    li.addEventListener('touchend',e=>{e.preventDefault();inp.value=li.textContent.trim();sug.remove();inp._sfSug=null;});
+  });
+}
+function sfAmcSugestAg(inp){
+  sfAmcFecharSug(inp);
+  const val=(inp.value||'');
+  const lastComma=val.lastIndexOf(',');
+  const cur=(lastComma>=0?val.substring(lastComma+1):val).trim().toUpperCase();
+  if(!cur||cur.length<1)return;
+  const all=typeof agentes!=='undefined'?agentes:[];
+  const fil=all.filter(a=>a.toUpperCase().startsWith(cur)).slice(0,15);
+  if(!fil.length)return;
+  const sug=document.createElement('div');
+  sug.className='suggestions';
+  sug.style.cssText='position:absolute;top:100%;left:0;right:0;z-index:9999;max-height:160px;overflow-y:auto;';
+  sug.innerHTML='<ul>'+fil.map(a=>'<li>'+a+'</li>').join('')+'</ul>';
+  inp.parentElement.style.position='relative';
+  inp.parentElement.appendChild(sug);
+  inp._sfSug=sug;
+  sug.querySelectorAll('li').forEach(li=>{
+    li.addEventListener('mousedown',e=>{
+      e.preventDefault();
+      const v=inp.value.trim();const lc=v.lastIndexOf(',');
+      const prefix=lc>=0?v.substring(0,lc+1).trim():'';
+      inp.value=(prefix?prefix+' ':'')+li.textContent.trim()+', ';
+      sug.remove();inp._sfSug=null;inp.focus();
+    });
+    li.addEventListener('touchend',e=>{
+      e.preventDefault();
+      const v=inp.value.trim();const lc=v.lastIndexOf(',');
+      const prefix=lc>=0?v.substring(0,lc+1).trim():'';
+      inp.value=(prefix?prefix+' ':'')+li.textContent.trim()+', ';
+      sug.remove();inp._sfSug=null;inp.focus();
+    });
+  });
+}
+function sfAmcFecharSug(inp){setTimeout(()=>{if(inp._sfSug){inp._sfSug.remove();inp._sfSug=null;}},200);}
+
+// ── Máscara CPF ────────────────────────────────────────────────
+function sfMascaraCPF(inp){
+  let v=inp.value.replace(/\D/g,'').substring(0,11);
+  if(v.length>9) v=v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/,'$1.$2.$3-$4');
+  else if(v.length>6) v=v.replace(/(\d{3})(\d{3})(\d{1,3})/,'$1.$2.$3');
+  else if(v.length>3) v=v.replace(/(\d{3})(\d{1,3})/,'$1.$2');
+  inp.value=v;
 }
 
 // ── Toggles ───────────────────────────────────────────────────
