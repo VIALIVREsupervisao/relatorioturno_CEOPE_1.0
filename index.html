@@ -1739,7 +1739,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy);color:var(--t
 // ══════════════════════════════════════════════
 // CONFIGURAÇÃO
 // ══════════════════════════════════════════════
-const APP_VERSION='2026-06-12-v3'; // Via Livre integrado // ← atualize esta string a cada deploy
+const APP_VERSION='2026-06-12-v6'; // Via Livre integrado // ← atualize esta string a cada deploy
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycbwNQg7oS7yITWKweCAqi0XvF8Bgn45ua7a9uVyMjPf95RsD59AQJGMwHYTAjguI-JVs/exec';
 const LS={session:'amc_rel_session',agentes:'agentesPersonalizados',rotas:'rotasPersonalizadas'};
 // Limpar sessão ao detectar nova versão — força re-login em todos os usuários
@@ -9536,14 +9536,14 @@ select.sf-input { text-transform: none; }
       <button onclick="sfFecharModal()" style="background:rgba(255,255,255,0.15);border:none;border-radius:8px;width:36px;height:36px;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
     </div>
 
-    <div id="sfFormBody" style="padding:14px 16px 80px;display:flex;flex-direction:column;gap:0;overflow-y:scroll;overflow-x:hidden;flex:1;min-height:0;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;">
+    <div id="sfFormBody" style="padding:14px 16px 80px;display:flex;flex-direction:column;gap:0;overflow-y:scroll;overflow-x:hidden;flex:1;min-height:0;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;will-change:scroll-position;">
 
       <!-- ══ 1. DADOS GERAIS ══ -->
       <div class="sf-section">
         <div class="sf-section-title"><i class="fas fa-info-circle"></i> 1. Dados Gerais</div>
         <div class="sf-row">
           <div><label class="sf-label">Data *</label><input type="date" class="sf-input" id="sfData"></div>
-          <div><label class="sf-label">Hora *</label><input type="time" class="sf-input" id="sfHora"></div>
+          <div><label class="sf-label">Hora *</label><input type="text" class="sf-input" id="sfHora" placeholder="HH:MM" maxlength="5" inputmode="numeric" oninput="sfMascaraHora(this)"></div>
         </div>
         <label class="sf-label">Tipo de Sinistro *</label>
         <select class="sf-input" id="sfTipo" onchange="sfToggleOutroTipo()">
@@ -10171,9 +10171,9 @@ function sfAddVeiculo(v={}) {
       <option value="">Selecione</option><option value="MOTOCICLETA"${v.tipo==='MOTOCICLETA'?' selected':''}>Motocicleta</option><option value="AUTOMÓVEL"${v.tipo==='AUTOMÓVEL'?' selected':''}>Automóvel</option><option value="CAMINHÃO"${v.tipo==='CAMINHÃO'?' selected':''}>Caminhão</option><option value="ÔNIBUS"${v.tipo==='ÔNIBUS'?' selected':''}>Ônibus</option><option value="BICICLETA"${v.tipo==='BICICLETA'?' selected':''}>Bicicleta</option><option value="QUADRICICLO"${v.tipo==='QUADRICICLO'?' selected':''}>Quadriciclo</option><option value="VEÍCULO AUTOPROPELIDO"${v.tipo==='VEÍCULO AUTOPROPELIDO'?' selected':''}>Veíc. Autopropelido</option><option value="OUTROS"${v.tipo==='OUTROS'?' selected':''}>Outros</option>
     </select>
     <input type="text" class="sf-input v-tipo-outro" placeholder="ESPECIFIQUE O TIPO" style="display:${v.tipo==='OUTROS'?'block':'none'};margin-top:4px;" value="${v.tipoOutro||''}" onchange="sfAtualizarVeicInfo(${id})">
-    <label class="sf-label">Placa</label><input type="text" class="sf-input" placeholder="ABC-1234" value="${v.placa||''}" onchange="sfAtualizarVeicInfo(${id})">
+    <label class="sf-label">Placa</label><input type="text" class="sf-input" placeholder="ABC1234 / ABC1D23" maxlength="7" oninput="sfMascaraPlaca(this)" onchange="sfAtualizarVeicInfo(${id})" value="${v.placa||''}">
     <label class="sf-label">Modelo / Marca</label><input type="text" class="sf-input" placeholder="HONDA CG 150" value="${v.modelo||''}">
-    <label class="sf-label">Ano / Licenciamento</label><input type="text" class="sf-input" placeholder="2020/2024" value="${v.ano||''}">`;
+    <label class="sf-label">Ano / Licenciamento</label><input type="text" class="sf-input" placeholder="2020/2024" maxlength="9" inputmode="numeric" oninput="sfMascaraAno(this)" value="${v.ano||''}">`;
   c.appendChild(d);
   sfAtualizarVinc(); sfAtualizarFatores(); sfAtualizarDRVs(); sfAtualizarCondVeic();
 }
@@ -10242,7 +10242,7 @@ function sfAddEnvolvido(e={}) {
       </div>
       <div class="sf-row campos-cnh-cat">
         <div><label class="sf-label">CNH</label><input type="text" class="sf-input e-cnh" value="${e.cnh||''}"></div>
-        <div><label class="sf-label">Categoria</label><input type="text" class="sf-input e-cat" placeholder="A/B" value="${e.categoria||''}"></div>
+        <div><label class="sf-label">Categoria</label><input type="text" class="sf-input e-cat" placeholder="A/B" maxlength="10" oninput="this.value=this.value.replace(/[^a-zA-Z\/]/g,'').toUpperCase()" value="${e.categoria||''}"></div>
       </div>
       <label class="sf-label">Tipo</label>
       <select class="sf-input e-tipo" onchange="sfToggleCamposCNH(this)">
@@ -10291,6 +10291,30 @@ function sfAddOrgao(tipo,v={}) {
     h+=`<label class="sf-label">Órgão</label><input type="text" class="sf-input orgao-nome" value="${v.nome||v.orgao||''}"><label class="sf-label">Informações</label><input type="text" class="sf-input orgao-info" value="${v.agentes||v.info||''}">`;
   }
   d.innerHTML=h; c.appendChild(d);
+}
+
+// ── Máscaras de campos ────────────────────────────────────────
+function sfMascaraHora(inp){
+  let v=inp.value.replace(/\D/g,'').substring(0,4);
+  if(v.length>=3) v=v.substring(0,2)+':'+v.substring(2);
+  // Validar horas e minutos
+  if(v.length===5){
+    const [h,m]=v.split(':').map(Number);
+    if(h>23) v='23:'+v.split(':')[1];
+    if(m>59) v=v.split(':')[0]+':59';
+  }
+  inp.value=v;
+}
+function sfMascaraPlaca(inp){
+  // Remove tudo que não é alfanumérico, uppercase
+  let v=inp.value.replace(/[^a-zA-Z0-9]/g,'').toUpperCase().substring(0,7);
+  // Padrão antigo: ABC1234 — Mercosul: ABC1D23
+  inp.value=v;
+}
+function sfMascaraAno(inp){
+  // Formato: AAAA ou AAAA/AAAA
+  let v=inp.value.replace(/[^0-9\/]/g,'').substring(0,9);
+  inp.value=v;
 }
 
 // ── Sugestões AMC ─────────────────────────────────────────────
@@ -10375,6 +10399,42 @@ async function sfAutoSalvarSilencioso(){
     if(info)info.textContent='Auto-salvo '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
     sfCarregar();
   }catch(e){console.warn('[SF] auto-save falhou:',e.message);}
+}
+
+// ── Data Nascimento e Idade ───────────────────────────────────
+function sfCalcIdadeValores(ano, mes, dia) {
+  const hj = new Date();
+  let id = hj.getFullYear() - ano;
+  if (hj.getMonth() + 1 < mes || (hj.getMonth() + 1 === mes && hj.getDate() < dia)) id--;
+  return id < 0 ? 0 : id;
+}
+function sfCalcIdade(inp) {
+  const item = inp.closest('.sf-item'); if (!item) return;
+  if (!inp.value) return;
+  const [ano, mes, dia] = inp.value.split('-').map(Number);
+  if (!ano || !mes || !dia) return;
+  const idade = sfCalcIdadeValores(ano, mes, dia);
+  const nascFormatado = String(dia).padStart(2,'0') + '/' + String(mes).padStart(2,'0') + '/' + ano;
+  const eNasc = item.querySelector('.e-nasc'); if (eNasc) eNasc.value = nascFormatado;
+  const eIdade = item.querySelector('.e-idade'); if (eIdade) eIdade.value = idade;
+}
+function sfSincNasc(inp) {
+  // Máscara DD/MM/AAAA enquanto digita
+  let v = inp.value.replace(/\D/g, '').substring(0, 8);
+  if (v.length >= 5) v = v.substring(0,2) + '/' + v.substring(2,4) + '/' + v.substring(4);
+  else if (v.length >= 3) v = v.substring(0,2) + '/' + v.substring(2);
+  inp.value = v;
+  // Calcular quando data completa
+  if (v.length === 10) {
+    const [d, m, a] = v.split('/').map(Number);
+    if (d >= 1 && d <= 31 && m >= 1 && m <= 12 && a >= 1900 && a <= new Date().getFullYear()) {
+      const item = inp.closest('.sf-item'); if (!item) return;
+      const idade = sfCalcIdadeValores(a, m, d);
+      const eIdade = item.querySelector('.e-idade'); if (eIdade) eIdade.value = idade;
+      const eDate = item.querySelector('.e-nasc-date');
+      if (eDate) eDate.value = a + '-' + String(m).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    }
+  }
 }
 
 // ── Máscara CPF ────────────────────────────────────────────────
