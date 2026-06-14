@@ -1746,7 +1746,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy);color:var(--t
 // ══════════════════════════════════════════════
 // CONFIGURAÇÃO
 // ══════════════════════════════════════════════
-const APP_VERSION='2026-06-14-v12'; // Via Livre integrado // ← atualize esta string a cada deploy
+const APP_VERSION='2026-06-14-v13'; // Via Livre integrado // ← atualize esta string a cada deploy
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycbwNQg7oS7yITWKweCAqi0XvF8Bgn45ua7a9uVyMjPf95RsD59AQJGMwHYTAjguI-JVs/exec';
 const LS={session:'amc_rel_session',agentes:'agentesPersonalizados',rotas:'rotasPersonalizadas'};
 // Limpar sessão ao detectar nova versão — força re-login em todos os usuários
@@ -9513,7 +9513,7 @@ select.sf-input { text-transform: none; }
 
 <!-- ── MODAL FORMULÁRIO COMPLETO ── -->
 <div id="sfModal" class="cov" style="z-index:870;align-items:flex-end;">
- <div id="sfModalBox" style="background:var(--surface2);border:1px solid var(--border2);border-radius:16px 16px 0 0;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+ <div id="sfModalBox" style="background:var(--surface2);border:1px solid var(--border2);border-radius:16px 16px 0 0;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:none;">
 
     <!-- Cabeçalho -->
     <div id="sfModalHeader" style="background:linear-gradient(135deg,#7f0000,#c62828);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-radius:16px 16px 0 0;margin:-0px;position:sticky;top:0;z-index:5;">
@@ -9999,14 +9999,11 @@ function sfAbrirModal(id) {
 function sfAbrirOverlay(){
   var m=document.getElementById('sfModal');
   if(!m)return;
-  m.classList.add('open');;
-  // Travar scroll do body e da telaFatais para não competir com o modal
-  document.body.classList.add('sf-no-scroll');
-  var tf=document.getElementById('sfListaWrap');
-  if(tf)tf.classList.add('sf-no-scroll');
+  m.classList.add('open');
   var box=document.getElementById('sfModalBox');
-  setTimeout(function(){if(box)box.scrollTop=0;},30);
+  setTimeout(function(){if(box)box.scrollTop=0;},50);
 }
+
 function sfFecharModal(force=false) {
   if(!force){
     const log=document.getElementById('sfLogradouro')?.value;
@@ -10017,9 +10014,7 @@ function sfFecharModal(force=false) {
   var m=document.getElementById('sfModal');
   if(m) m.classList.remove('open');
   // Restaurar scroll
-  document.body.classList.remove('sf-no-scroll');
-  var tf=document.getElementById('sfListaWrap');
-  if(tf)tf.classList.remove('sf-no-scroll');
+
 
   document.querySelectorAll('#sfFormBody input,#sfFormBody select,#sfFormBody textarea').forEach(el=>el.removeAttribute('disabled'));
   sfEditandoId=null;
