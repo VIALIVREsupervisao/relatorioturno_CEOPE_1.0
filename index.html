@@ -410,8 +410,21 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy);color:var(--t
 .sf-no-scroll{overflow:hidden!important;}
 /* sfModal — padrão próprio igual ao bib-painel */
 /* sf-no-scroll usado pelo sfModal */
+/* Otimização de scroll touch para o corpo do formulário */
+#sfFormBody{
+  /* Força aceleração de hardware no scroll — evita travamento no iOS/Android */
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+  scroll-behavior:auto; /* sem smooth — evita jank em dispositivos lentos */
+}
+/* Textareas não devem capturar o scroll do container pai no touch */
+#sfFormBody textarea{
+  touch-action:pan-y;
+  overscroll-behavior:contain;
+}
 @media(max-width:768px){
   #sfModalBox{max-width:100%;max-height:90vh;border-radius:16px 16px 0 0;}
+  #sfFormBody{max-height:calc(90vh - 64px);} /* 64px = altura do header */
   #sfModalBox input,#sfModalBox select,#sfModalBox textarea{font-size:16px;}
 }
 .cbox{background:var(--surface2);border:1px solid var(--border2);border-radius:12px;padding:24px;width:100%;max-width:320px;text-align:center;}
@@ -1746,7 +1759,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy);color:var(--t
 // ══════════════════════════════════════════════
 // CONFIGURAÇÃO
 // ══════════════════════════════════════════════
-const APP_VERSION='2026-06-14-v13'; // Via Livre integrado // ← atualize esta string a cada deploy
+const APP_VERSION='2026-06-14-v15'; // Via Livre integrado // ← atualize esta string a cada deploy
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycbwNQg7oS7yITWKweCAqi0XvF8Bgn45ua7a9uVyMjPf95RsD59AQJGMwHYTAjguI-JVs/exec';
 const LS={session:'amc_rel_session',agentes:'agentesPersonalizados',rotas:'rotasPersonalizadas'};
 // Limpar sessão ao detectar nova versão — força re-login em todos os usuários
@@ -9513,15 +9526,15 @@ select.sf-input { text-transform: none; }
 
 <!-- ── MODAL FORMULÁRIO COMPLETO ── -->
 <div id="sfModal" class="cov" style="z-index:870;align-items:flex-end;">
- <div id="sfModalBox" style="background:var(--surface2);border:1px solid var(--border2);border-radius:16px 16px 0 0;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:none;">
+ <div id="sfModalBox" style="background:var(--surface2);border:1px solid var(--border2);border-radius:16px 16px 0 0;width:100%;max-width:680px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;">
 
-    <!-- Cabeçalho -->
-    <div id="sfModalHeader" style="background:linear-gradient(135deg,#7f0000,#c62828);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-radius:16px 16px 0 0;margin:-0px;position:sticky;top:0;z-index:5;">
+    <!-- Cabeçalho — FIXO no topo (sem sticky, compatível com Edge/Safari mobile) -->
+    <div id="sfModalHeader" style="background:linear-gradient(135deg,#7f0000,#c62828);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-radius:16px 16px 0 0;flex-shrink:0;z-index:5;width:100%;">
       <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:16px;letter-spacing:2px;text-transform:uppercase;color:#fff;" id="sfModalTit">⚠ NOVO SINISTRO FATAL</div>
       <button onclick="sfFecharModal()" style="background:rgba(255,255,255,0.15);border:none;border-radius:8px;width:36px;height:36px;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
     </div>
 
-   <div id="sfFormBody">
+   <div id="sfFormBody" style="overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;flex:1;will-change:scroll-position;">
 
       <!-- ══ 1. DADOS GERAIS ══ -->
       <div class="sf-section">
@@ -9742,7 +9755,7 @@ select.sf-input { text-transform: none; }
       </div>
 
           <!-- Botões de ação -->
-      <div style="padding:14px 16px 24px;display:flex;gap:8px;flex-wrap:wrap;">
+      <div style="padding:14px 16px 48px;display:flex;gap:8px;flex-wrap:wrap;">
         <button id="sfBtnSalvar" onclick="sfSalvar()" style="flex:2;min-width:140px;padding:14px;background:linear-gradient(135deg,#c62828,#7f0000);border:none;border-radius:8px;color:#fff;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:15px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;"><i class="fas fa-cloud-upload-alt"></i> Salvar na Nuvem</button>
         <button id="sfBtnPDF" onclick="sfGerarPDF()" style="flex:1;min-width:90px;padding:14px;background:linear-gradient(135deg,#1d4ed8,#2563eb);border:none;border-radius:8px;color:#fff;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;"><i class="fas fa-file-pdf"></i> PDF</button>
         <button onclick="sfFecharModal()" style="flex:1;min-width:70px;padding:14px;background:var(--surface3);border:1px solid var(--border2);border-radius:8px;color:var(--text2);font-family:'Rajdhani',sans-serif;font-weight:700;font-size:13px;cursor:pointer;">Cancelar</button>
@@ -9776,7 +9789,15 @@ function sfIso(d) { return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2
 function sfFmtBR(s) { if(!s)return''; const p=s.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; }
 function sfPodeEditar() { return ['admin','supervisor'].includes(G.role); }
 function sfPodeLer()    { return ['admin','supervisor','central','chefia'].includes(G.role); }
-function sfCharCount(el,id){ const c=document.getElementById(id); if(c) c.textContent=el.value.length+' caracteres'; }
+// sfCharCount com debounce para evitar travamento no mobile
+var _sfCharTimers={};
+function sfCharCount(el,id){
+  clearTimeout(_sfCharTimers[id]);
+  _sfCharTimers[id]=setTimeout(function(){
+    var c=document.getElementById(id);
+    if(c) c.textContent=el.value.length+' caracteres';
+  },120);
+}
 
 // scroll controlado por CSS
 
