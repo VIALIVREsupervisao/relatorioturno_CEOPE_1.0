@@ -1739,7 +1739,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy);color:var(--t
 // ══════════════════════════════════════════════
 // CONFIGURAÇÃO
 // ══════════════════════════════════════════════
-const APP_VERSION='2026-06-14-v1'; // Via Livre integrado // ← atualize esta string a cada deploy
+const APP_VERSION='2026-06-14-v2'; // Via Livre integrado // ← atualize esta string a cada deploy
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycbwNQg7oS7yITWKweCAqi0XvF8Bgn45ua7a9uVyMjPf95RsD59AQJGMwHYTAjguI-JVs/exec';
 const LS={session:'amc_rel_session',agentes:'agentesPersonalizados',rotas:'rotasPersonalizadas'};
 // Limpar sessão ao detectar nova versão — força re-login em todos os usuários
@@ -9812,15 +9812,56 @@ function sfPodeEditar() { return ['admin','supervisor'].includes(G.role); }
 function sfPodeLer()    { return ['admin','supervisor','central','chefia'].includes(G.role); }
 function sfCharCount(el,id){ const c=document.getElementById(id); if(c) c.textContent=el.value.length+' caracteres'; }
 
-// Bloquear scroll do overlay sfModal (só permite scroll dentro do sfFormBody)
+// ── Controle de scroll do modal no mobile ─────────────────────
+// Variáveis para detectar direção do toque e limites do scroll
+var _sfTouchStartY = 0;
+var _sfTouchStartX = 0;
+
+document.addEventListener('touchstart', function(e){
+  var modal=document.getElementById('sfModal');
+  if(!modal||modal.style.display==='none'||modal.style.display==='') return;
+  _sfTouchStartY = e.touches[0].clientY;
+  _sfTouchStartX = e.touches[0].clientX;
+},{passive:true});
+
 document.addEventListener('touchmove', function(e){
   var modal=document.getElementById('sfModal');
   if(!modal||modal.style.display==='none'||modal.style.display==='') return;
+
   var fb=document.getElementById('sfFormBody');
-  // Se o toque não está dentro do sfFormBody, bloquear
-  if(fb&&!fb.contains(e.target)){
+
+  // Toque fora do sfFormBody (overlay, header, footer): bloquear sempre
+  if(!fb||!fb.contains(e.target)){
     e.preventDefault();
+    return;
   }
+
+  // Toque dentro do sfFormBody: verificar se está nos limites
+  var deltaY = e.touches[0].clientY - _sfTouchStartY;
+  var scrollTop = fb.scrollTop;
+  var scrollHeight = fb.scrollHeight;
+  var clientHeight = fb.clientHeight;
+
+  var atTop    = scrollTop <= 0;
+  var atBottom = scrollTop + clientHeight >= scrollHeight - 1;
+
+  // Subindo (dedo para baixo) e já no topo: bloquear
+  if(atTop && deltaY > 0){
+    e.preventDefault();
+    return;
+  }
+  // Descendo (dedo para cima) e já no fundo: bloquear
+  if(atBottom && deltaY < 0){
+    e.preventDefault();
+    return;
+  }
+  // Movimento horizontal predominante: bloquear (evita scroll lateral acidental)
+  var deltaX = Math.abs(e.touches[0].clientX - _sfTouchStartX);
+  if(deltaX > Math.abs(deltaY) * 1.5){
+    e.preventDefault();
+    return;
+  }
+  // Caso contrário: deixar o sfFormBody rolar normalmente
 },{passive:false});
 
 // Força maiúsculo + agenda auto-save em inputs do modal
