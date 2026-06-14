@@ -1739,7 +1739,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy);color:var(--t
 // ══════════════════════════════════════════════
 // CONFIGURAÇÃO
 // ══════════════════════════════════════════════
-const APP_VERSION='2026-06-12-v6'; // Via Livre integrado // ← atualize esta string a cada deploy
+const APP_VERSION='2026-06-14-v1'; // Via Livre integrado // ← atualize esta string a cada deploy
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycbwNQg7oS7yITWKweCAqi0XvF8Bgn45ua7a9uVyMjPf95RsD59AQJGMwHYTAjguI-JVs/exec';
 const LS={session:'amc_rel_session',agentes:'agentesPersonalizados',rotas:'rotasPersonalizadas'};
 // Limpar sessão ao detectar nova versão — força re-login em todos os usuários
@@ -9454,6 +9454,25 @@ select.sf-input { text-transform: none; }
 }
 .sf-card:active { transform: scale(0.99); }
 @keyframes fadeinUp { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
+/* Travar scroll do body quando sfModal aberto */
+body.sf-modal-open {
+  overflow: hidden !important;
+  position: fixed !important;
+  width: 100% !important;
+  /* Preserve scroll position */
+  top: var(--sf-scroll-top, 0) !important;
+}
+#sfModal {
+  /* Garantir que o overlay cobre tudo */
+  isolation: isolate;
+}
+#sfFormBody {
+  /* Forçar scroll somente neste elemento */
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+
 @media (max-width: 768px) {
   .sf-row  { grid-template-columns: 1fr; }
   .sf-row3 { grid-template-columns: 1fr 1fr; }
@@ -9793,6 +9812,17 @@ function sfPodeEditar() { return ['admin','supervisor'].includes(G.role); }
 function sfPodeLer()    { return ['admin','supervisor','central','chefia'].includes(G.role); }
 function sfCharCount(el,id){ const c=document.getElementById(id); if(c) c.textContent=el.value.length+' caracteres'; }
 
+// Bloquear scroll do overlay sfModal (só permite scroll dentro do sfFormBody)
+document.addEventListener('touchmove', function(e){
+  var modal=document.getElementById('sfModal');
+  if(!modal||modal.style.display==='none'||modal.style.display==='') return;
+  var fb=document.getElementById('sfFormBody');
+  // Se o toque não está dentro do sfFormBody, bloquear
+  if(fb&&!fb.contains(e.target)){
+    e.preventDefault();
+  }
+},{passive:false});
+
 // Força maiúsculo + agenda auto-save em inputs do modal
 document.addEventListener('input', function(e){
   const el=e.target;
@@ -10011,19 +10041,16 @@ function sfAbrirModal(id) {
 function sfAbrirOverlay(){
   var m=document.getElementById('sfModal');
   if(!m)return;
-  m.style.cssText='display:flex;position:fixed;top:0;left:0;width:100%;height:100%;z-index:870;background:rgba(0,0,0,0.82);align-items:flex-end;justify-content:center;overflow:hidden;';
-  var box=document.getElementById('sfModalBox');
-  if(box){
-    box.style.width='100%';
-    box.style.maxWidth='700px';
-    box.style.height='94vh';
-    box.style.maxHeight='94vh';
-    box.style.overflowY='auto';
-    box.style.borderRadius='16px 16px 0 0';
-    box.style.margin='0';
-  }
+  // Travar scroll do body para evitar conflito de toque
+  var scrollY=window.scrollY||window.pageYOffset||0;
+  document.documentElement.style.setProperty('--sf-scroll-top','-'+scrollY+'px');
+  document.body.classList.add('sf-modal-open');
+  document.body.dataset.sfScrollY=scrollY;
+  // Exibir modal
+  m.style.cssText='display:flex;position:fixed;top:0;left:0;width:100%;height:100%;z-index:870;background:rgba(0,0,0,0.82);align-items:flex-end;justify-content:center;overflow:hidden;padding:0;';
   // Scroll para o topo do formulário
-  setTimeout(function(){if(box)box.scrollTop=0;},50);
+  var fb=document.getElementById('sfFormBody');
+  setTimeout(function(){if(fb){fb.scrollTop=0;}},30);
 }
 function sfFecharModal(force=false) {
   if(!force){
@@ -10034,6 +10061,13 @@ function sfFecharModal(force=false) {
   }
   var m=document.getElementById('sfModal');
   if(m) m.style.cssText='display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:870;background:rgba(0,0,0,0.82);align-items:flex-end;justify-content:center;overflow:hidden;';
+  // Restaurar scroll do body
+  document.body.classList.remove('sf-modal-open');
+  document.documentElement.style.removeProperty('--sf-scroll-top');
+  const sy=parseInt(document.body.dataset.sfScrollY||'0');
+  document.body.style.top='';
+  document.body.style.position='';
+  window.scrollTo(0,sy);
   document.querySelectorAll('#sfFormBody input,#sfFormBody select,#sfFormBody textarea').forEach(el=>el.removeAttribute('disabled'));
   sfEditandoId=null;
 }
