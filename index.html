@@ -407,6 +407,8 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy);color:var(--t
 .toast.err{border-color:rgba(239,68,68,0.5);color:var(--red2);}
 .cov{position:fixed;inset:0;z-index:600;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;padding:20px;}
 .cov.open{display:flex;}
+/* Travar scroll quando sfModal aberto */
+.sf-no-scroll{overflow:hidden!important;}
 .cbox{background:var(--surface2);border:1px solid var(--border2);border-radius:12px;padding:24px;width:100%;max-width:320px;text-align:center;}
 .cbox h3{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:18px;margin-bottom:8px;}
 .cbox p{font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.5;}
@@ -1739,7 +1741,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy);color:var(--t
 // ══════════════════════════════════════════════
 // CONFIGURAÇÃO
 // ══════════════════════════════════════════════
-const APP_VERSION='2026-06-14-v7'; // Via Livre integrado // ← atualize esta string a cada deploy
+const APP_VERSION='2026-06-14-v8'; // Via Livre integrado // ← atualize esta string a cada deploy
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycbwNQg7oS7yITWKweCAqi0XvF8Bgn45ua7a9uVyMjPf95RsD59AQJGMwHYTAjguI-JVs/exec';
 const LS={session:'amc_rel_session',agentes:'agentesPersonalizados',rotas:'rotasPersonalizadas'};
 // Limpar sessão ao detectar nova versão — força re-login em todos os usuários
@@ -10000,6 +10002,10 @@ function sfAbrirOverlay(){
   var m=document.getElementById('sfModal');
   if(!m)return;
   m.classList.add('open');
+  // Travar scroll do body e da telaFatais para não competir com o modal
+  document.body.classList.add('sf-no-scroll');
+  var tf=document.getElementById('sfListaWrap');
+  if(tf)tf.classList.add('sf-no-scroll');
   var box=document.getElementById('sfModalBox');
   setTimeout(function(){if(box)box.scrollTop=0;},30);
 }
@@ -10012,6 +10018,10 @@ function sfFecharModal(force=false) {
   }
   var m=document.getElementById('sfModal');
   if(m) m.classList.remove('open');
+  // Restaurar scroll
+  document.body.classList.remove('sf-no-scroll');
+  var tf=document.getElementById('sfListaWrap');
+  if(tf)tf.classList.remove('sf-no-scroll');
 
   document.querySelectorAll('#sfFormBody input,#sfFormBody select,#sfFormBody textarea').forEach(el=>el.removeAttribute('disabled'));
   sfEditandoId=null;
