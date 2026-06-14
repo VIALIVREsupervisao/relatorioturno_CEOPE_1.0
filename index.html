@@ -426,6 +426,9 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy);color:var(--t
   -webkit-overflow-scrolling:touch;
   overscroll-behavior:contain;
   scroll-behavior:auto;
+  /* Isola o formulário do resto do documento — mudanças internas não
+     forçam recalculo de layout na página de fundo (principal causa de jank) */
+  contain: layout style;
 }
 #sfFormBody textarea{
   touch-action:pan-y;
@@ -1799,7 +1802,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy);color:var(--t
 // ══════════════════════════════════════════════
 // CONFIGURAÇÃO
 // ══════════════════════════════════════════════
-const APP_VERSION='2026-06-14-v16'; // Via Livre integrado // ← atualize esta string a cada deploy
+const APP_VERSION='2026-06-14-v17'; // Via Livre integrado // ← atualize esta string a cada deploy
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycbwNQg7oS7yITWKweCAqi0XvF8Bgn45ua7a9uVyMjPf95RsD59AQJGMwHYTAjguI-JVs/exec';
 const LS={session:'amc_rel_session',agentes:'agentesPersonalizados',rotas:'rotasPersonalizadas'};
 // Limpar sessão ao detectar nova versão — força re-login em todos os usuários
@@ -9402,7 +9405,12 @@ function srvCm(id) { var el=document.getElementById(id); if(el)el.classList.remo
 <!-- ══════════════════════════════════════════════════════════════ -->
 <style>
 /* ── Sinistros Fatais: estilos base ── */
-.sf-section { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+.sf-section { padding: 14px 16px; border-bottom: 1px solid var(--border);
+  /* Instrui o browser a não renderizar seções fora da tela — reduz drasticamente
+     o custo de scroll em formulários longos no mobile */
+  content-visibility: auto;
+  contain-intrinsic-size: 0 300px; /* altura estimada por seção para evitar saltos de scroll */
+}
 .sf-section-title {
   font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 13px;
   letter-spacing: 2px; text-transform: uppercase; color: #ef4444;
@@ -9441,12 +9449,14 @@ select.sf-input { text-transform: none; }
 .sf-item {
   background: rgba(198,40,40,0.07); border: 1px solid rgba(198,40,40,0.25);
   border-left: 4px solid #c62828; border-radius: 8px; padding: 12px 42px 12px 12px;
-  margin-bottom: 8px; position: relative; animation: fadeinUp .2s;
+  margin-bottom: 8px; position: relative;
+  /* REMOVIDO: animation: fadeinUp .2s — causava recalculo de layout durante scroll mobile */
 }
 .sf-item-blue {
   background: rgba(59,130,246,0.07); border: 1px solid rgba(59,130,246,0.25);
   border-left: 4px solid #3b82f6; border-radius: 8px; padding: 12px 42px 12px 12px;
-  margin-bottom: 8px; position: relative; animation: fadeinUp .2s;
+  margin-bottom: 8px; position: relative;
+  /* REMOVIDO: animation: fadeinUp .2s */
 }
 .sf-item-tit {
   font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 11px;
@@ -9476,7 +9486,7 @@ select.sf-input { text-transform: none; }
   display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text);
   cursor: pointer; padding: 6px 8px; border-radius: 6px;
   border: 1px solid var(--border); background: rgba(255,255,255,0.03);
-  transition: background .15s;
+  /* REMOVIDO: transition: background .15s — múltiplos elementos com transition causam jank no scroll mobile */
 }
 .sf-ck-item:has(input:checked) { background: rgba(198,40,40,0.12); border-color: rgba(198,40,40,0.4); }
 .sf-ck-item input[type="checkbox"] { accent-color: #c62828; width: 15px; height: 15px; flex-shrink: 0; }
@@ -9493,6 +9503,8 @@ select.sf-input { text-transform: none; }
   border: 2px dashed var(--border2); border-radius: 8px; padding: 10px;
   text-align: center; background: var(--surface3); min-height: 150px;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  /* Isola custo de layout de cada slot — mudança em um slot não força recalculo dos outros */
+  contain: layout style;
 }
 .sf-img-slot img { max-width: 100%; max-height: 120px; border-radius: 4px; }
 .sf-img-slot button { margin: 2px 2px 0; font-size: 11px; padding: 5px 8px; }
@@ -9574,7 +9586,7 @@ select.sf-input { text-transform: none; }
       <button onclick="sfFecharModal()" style="background:rgba(255,255,255,0.15);border:none;border-radius:8px;width:36px;height:36px;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
     </div>
 
-   <div id="sfFormBody" style="overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;flex:1;will-change:scroll-position;">
+   <div id="sfFormBody" style="overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;flex:1;">
 
       <!-- ══ 1. DADOS GERAIS ══ -->
       <div class="sf-section">
@@ -9842,15 +9854,20 @@ function sfCharCount(el,id){
 // scroll controlado por CSS
 
 // Força maiúsculo + agenda auto-save em inputs do modal
+// O listener usa requestAnimationFrame para não bloquear o thread principal durante scroll
+var _sfInputTimer = null;
 document.addEventListener('input', function(e){
   const el=e.target;
   if (!el.closest('#sfModal')) return;
+  // Maiúsculo: imediato (não pode ser adiado pois o cursor muda)
   if ((el.tagName==='INPUT'&&el.type==='text')||el.tagName==='TEXTAREA') {
     const p=el.selectionStart; el.value=el.value.toUpperCase();
     try{el.setSelectionRange(p,p);}catch(err){}
   }
-  sfAgendarAutoSave();
-});
+  // Auto-save: debounced, fora do frame de input
+  clearTimeout(_sfInputTimer);
+  _sfInputTimer = setTimeout(sfAgendarAutoSave, 300);
+}, {passive: true});
 document.addEventListener('change', function(e){
   if (!e.target.closest('#sfModal')) return;
   sfAgendarAutoSave();
