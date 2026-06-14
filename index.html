@@ -407,8 +407,19 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy);color:var(--t
 .toast.err{border-color:rgba(239,68,68,0.5);color:var(--red2);}
 .cov{position:fixed;inset:0;z-index:600;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;padding:20px;}
 .cov.open{display:flex;}
-/* Travar scroll quando sfModal aberto */
 .sf-no-scroll{overflow:hidden!important;}
+/* sfModal — padrão próprio igual ao bib-painel */
+.sf-painel{display:none;position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;z-index:870;background:rgba(0,0,0,0.78);align-items:flex-end;justify-content:center;padding:0;}
+.sf-painel.open{display:flex;}
+.sf-box{background:var(--surface2);border:1px solid var(--border2);border-radius:16px 16px 0 0;width:100%;max-width:680px;height:92vh;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;}
+.sf-box-header{flex-shrink:0;background:linear-gradient(135deg,#7f0000,#c62828);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-radius:16px 16px 0 0;}
+.sf-box-body{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding:14px 16px 32px;}
+@media(max-width:768px){
+  .sf-painel{align-items:flex-end;}
+  .sf-box{max-width:100%;width:100%;height:92dvh;max-height:92dvh;border-radius:16px 16px 0 0;}
+  .sf-box-body{-webkit-overflow-scrolling:touch;}
+  .sf-box-body input,.sf-box-body select,.sf-box-body textarea{font-size:16px;}
+}
 .cbox{background:var(--surface2);border:1px solid var(--border2);border-radius:12px;padding:24px;width:100%;max-width:320px;text-align:center;}
 .cbox h3{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:18px;margin-bottom:8px;}
 .cbox p{font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.5;}
@@ -1741,7 +1752,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy);color:var(--t
 // ══════════════════════════════════════════════
 // CONFIGURAÇÃO
 // ══════════════════════════════════════════════
-const APP_VERSION='2026-06-14-v9'; // Via Livre integrado // ← atualize esta string a cada deploy
+const APP_VERSION='2026-06-14-v10'; // Via Livre integrado // ← atualize esta string a cada deploy
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycbwNQg7oS7yITWKweCAqi0XvF8Bgn45ua7a9uVyMjPf95RsD59AQJGMwHYTAjguI-JVs/exec';
 const LS={session:'amc_rel_session',agentes:'agentesPersonalizados',rotas:'rotasPersonalizadas'};
 // Limpar sessão ao detectar nova versão — força re-login em todos os usuários
@@ -9461,7 +9472,6 @@ select.sf-input { text-transform: none; }
   .sf-row3 { grid-template-columns: 1fr 1fr; }
   .sf-ck-grid { grid-template-columns: 1fr; }
   .sf-img-grid { grid-template-columns: 1fr 1fr; }
-  .sf-input { font-size: 16px; padding: 12px; }
   .sf-add-btn, .sf-add-btn-blue { width: 100%; padding: 13px; font-size: 14px; margin-top: 6px; }
   .sf-btnrem { padding: 8px 12px; font-size: 13px; }
   .sf-item, .sf-item-blue { padding: 12px; margin-bottom: 10px; }
@@ -9469,9 +9479,6 @@ select.sf-input { text-transform: none; }
   .sf-section-title { font-size: 14px; }
   .sf-subsec { padding: 10px; }
   .sf-ck-item { padding: 10px 8px; font-size: 13px; }
-  #sfModal { padding: 0 !important; }
-  #sfModalBox { max-width: 100%; max-height: 92vh; border-radius: 16px 16px 0 0; }
-  #sfFormBody { -webkit-overflow-scrolling: touch; }
   #telaFatais { touch-action: pan-y; }
 }
 
@@ -9511,16 +9518,16 @@ select.sf-input { text-transform: none; }
 </div>
 
 <!-- ── MODAL FORMULÁRIO COMPLETO ── -->
-<div id="sfModal" class="cov" style="z-index:870;align-items:flex-end;padding:0;">
-  <div id="sfModalBox" style="background:var(--surface2);border:1px solid var(--border2);border-radius:16px 16px 0 0;width:100%;max-width:680px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;">
+<div id="sfModal" class="sf-painel">
+ <div id="sfModalBox" class="sf-box">
 
     <!-- Cabeçalho -->
-    <div id="sfModalHeader" style="flex-shrink:0;background:linear-gradient(135deg,#7f0000,#c62828);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-radius:16px 16px 0 0;">
+    <div id="sfModalHeader" class="sf-box-header">
       <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:16px;letter-spacing:2px;text-transform:uppercase;color:#fff;" id="sfModalTit">⚠ NOVO SINISTRO FATAL</div>
       <button onclick="sfFecharModal()" style="background:rgba(255,255,255,0.15);border:none;border-radius:8px;width:36px;height:36px;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
     </div>
 
-    <div id="sfFormBody" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding:14px 16px 24px;display:flex;flex-direction:column;gap:0;">
+   <div id="sfFormBody" class="sf-box-body">
 
       <!-- ══ 1. DADOS GERAIS ══ -->
       <div class="sf-section">
@@ -9997,7 +10004,7 @@ function sfAbrirModal(id) {
 function sfAbrirOverlay(){
   var m=document.getElementById('sfModal');
   if(!m)return;
-  m.classList.add('open');
+  m.classList.add('open');;
   // Travar scroll do body e da telaFatais para não competir com o modal
   document.body.classList.add('sf-no-scroll');
   var tf=document.getElementById('sfListaWrap');
