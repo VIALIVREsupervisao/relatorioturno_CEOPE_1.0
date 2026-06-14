@@ -407,25 +407,65 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy);color:var(--t
 .toast.err{border-color:rgba(239,68,68,0.5);color:var(--red2);}
 .cov{position:fixed;inset:0;z-index:600;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;padding:20px;}
 .cov.open{display:flex;}
-.sf-no-scroll{overflow:hidden!important;}
-/* sfModal — padrão próprio igual ao bib-painel */
-/* sf-no-scroll usado pelo sfModal */
-/* Otimização de scroll touch para o corpo do formulário */
+/* sfModal ocupa tela toda no mobile — sem padding lateral, sem exposição do fundo */
+#sfModal.open{padding:0;align-items:flex-end;}
+
+/* ── BLOQUEIO DE SCROLL DA PÁGINA DE FUNDO (iOS + Android) ──
+   overflow:hidden no body sozinho não funciona no Safari mobile.
+   A técnica correta é fixar o body na posição atual do scroll. */
+.sf-no-scroll{
+  overflow:hidden!important;
+  /* Impede que o fundo role sob o modal no iOS */
+  position:fixed;
+  width:100%;
+  /* left é setado via JS com o scrollY atual */
+}
+
+/* ── OTIMIZAÇÃO DE SCROLL DO FORMULÁRIO ── */
 #sfFormBody{
-  /* Força aceleração de hardware no scroll — evita travamento no iOS/Android */
   -webkit-overflow-scrolling:touch;
   overscroll-behavior:contain;
-  scroll-behavior:auto; /* sem smooth — evita jank em dispositivos lentos */
+  scroll-behavior:auto;
 }
-/* Textareas não devem capturar o scroll do container pai no touch */
 #sfFormBody textarea{
   touch-action:pan-y;
   overscroll-behavior:contain;
 }
+
+/* ── MOBILE: modal ocupa viewport visível real (svh = smallest viewport height)
+   svh exclui a barra do browser, evitando o bug de altura que causava travamento.
+   Fallback: 100% da altura do overlay fixed (que já ocupa a tela toda). ── */
 @media(max-width:768px){
-  #sfModalBox{max-width:100%;max-height:90vh;border-radius:16px 16px 0 0;}
-  #sfFormBody{max-height:calc(90vh - 64px);} /* 64px = altura do header */
+  #sfModal.open{
+    /* O overlay já é position:fixed inset:0 — o modal filho ocupa 100% disso */
+    align-items:flex-end;
+  }
+  #sfModalBox{
+    max-width:100%;
+    /* Usa 92svh se disponível (exclui barra do browser) → sem travamento de altura */
+    height:92svh;
+    height:92dvh; /* dvh = dynamic, muda conforme barra aparece/some */
+    max-height:92svh;
+    max-height:92dvh;
+    border-radius:16px 16px 0 0;
+  }
+  #sfFormBody{
+    /* Altura = modal - header fixo (64px) */
+    height:calc(92svh - 64px);
+    height:calc(92dvh - 64px);
+    max-height:calc(92svh - 64px);
+    max-height:calc(92dvh - 64px);
+  }
   #sfModalBox input,#sfModalBox select,#sfModalBox textarea{font-size:16px;}
+}
+/* Fallback para browsers sem svh/dvh (Android mais antigo) */
+@supports not (height:1svh){
+  @media(max-width:768px){
+    /* Usa 85vh conservador para garantir que o conteúdo fique visível
+       mesmo com barra do browser ocupando ~8vh */
+    #sfModalBox{height:85vh;max-height:85vh;}
+    #sfFormBody{height:calc(85vh - 64px);max-height:calc(85vh - 64px);}
+  }
 }
 .cbox{background:var(--surface2);border:1px solid var(--border2);border-radius:12px;padding:24px;width:100%;max-width:320px;text-align:center;}
 .cbox h3{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:18px;margin-bottom:8px;}
@@ -1759,7 +1799,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy);color:var(--t
 // ══════════════════════════════════════════════
 // CONFIGURAÇÃO
 // ══════════════════════════════════════════════
-const APP_VERSION='2026-06-14-v15'; // Via Livre integrado // ← atualize esta string a cada deploy
+const APP_VERSION='2026-06-14-v16'; // Via Livre integrado // ← atualize esta string a cada deploy
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycbwNQg7oS7yITWKweCAqi0XvF8Bgn45ua7a9uVyMjPf95RsD59AQJGMwHYTAjguI-JVs/exec';
 const LS={session:'amc_rel_session',agentes:'agentesPersonalizados',rotas:'rotasPersonalizadas'};
 // Limpar sessão ao detectar nova versão — força re-login em todos os usuários
@@ -9526,7 +9566,7 @@ select.sf-input { text-transform: none; }
 
 <!-- ── MODAL FORMULÁRIO COMPLETO ── -->
 <div id="sfModal" class="cov" style="z-index:870;align-items:flex-end;">
- <div id="sfModalBox" style="background:var(--surface2);border:1px solid var(--border2);border-radius:16px 16px 0 0;width:100%;max-width:680px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;">
+ <div id="sfModalBox" style="background:var(--surface2);border:1px solid var(--border2);border-radius:16px 16px 0 0;width:100%;max-width:680px;max-height:90vh;max-height:90dvh;height:90vh;height:90dvh;display:flex;flex-direction:column;overflow:hidden;">
 
     <!-- Cabeçalho — FIXO no topo (sem sticky, compatível com Edge/Safari mobile) -->
     <div id="sfModalHeader" style="background:linear-gradient(135deg,#7f0000,#c62828);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-radius:16px 16px 0 0;flex-shrink:0;z-index:5;width:100%;">
@@ -9989,7 +10029,7 @@ function sfVerDetalhe(idx) {
   document.querySelectorAll('#sfFormBody button').forEach(el=>el.setAttribute('disabled','disabled'));
   document.getElementById('sfBtnSalvar').style.display='none';
   document.getElementById('sfBtnPDF').style.display=''; document.getElementById('sfBtnPDF').removeAttribute('disabled');
-  document.getElementById('sfModal').classList.add('open');
+  sfAbrirOverlay();
 }
 
 // ── Abrir modal (novo ou editar) ──────────────────────────────
@@ -10017,12 +10057,34 @@ function sfAbrirModal(id) {
   }
   sfAbrirOverlay();
 }
+// Guarda posição do scroll ao abrir modal (técnica iOS scroll lock)
+var _sfScrollY = 0;
+
 function sfAbrirOverlay(){
   var m=document.getElementById('sfModal');
   if(!m)return;
+
+  // Congela página na posição atual (funciona no iOS/Android/Edge)
+  _sfScrollY = window.scrollY || window.pageYOffset || 0;
+  document.body.style.top = '-' + _sfScrollY + 'px';
+  document.body.classList.add('sf-no-scroll');
+
+  // Bloqueia toques no overlay escuro para evitar que o browser
+  // mostre/esconda a barra de navegação (causa da variação de vh e travamento)
+  m.addEventListener('touchstart', _sfBlockOverlayTouch, {passive:false});
+  m.addEventListener('touchmove',  _sfBlockOverlayTouch, {passive:false});
+
   m.classList.add('open');
-  var box=document.getElementById('sfModalBox');
-  setTimeout(function(){if(box)box.scrollTop=0;},50);
+  var body=document.getElementById('sfFormBody');
+  setTimeout(function(){if(body)body.scrollTop=0;},50);
+}
+
+// Cancela toque na área escura do overlay, deixa passar apenas dentro do card
+function _sfBlockOverlayTouch(e){
+  if(!e.target.closest('#sfModalBox')){
+    e.preventDefault();
+    e.stopPropagation();
+  }
 }
 
 function sfFecharModal(force=false) {
@@ -10033,9 +10095,15 @@ function sfFecharModal(force=false) {
     }
   }
   var m=document.getElementById('sfModal');
-  if(m) m.classList.remove('open');
-  // Restaurar scroll
-
+  if(m){
+    m.classList.remove('open');
+    m.removeEventListener('touchstart', _sfBlockOverlayTouch);
+    m.removeEventListener('touchmove',  _sfBlockOverlayTouch);
+  }
+  // Restaura scroll da página exatamente onde estava
+  document.body.classList.remove('sf-no-scroll');
+  document.body.style.top = '';
+  window.scrollTo(0, _sfScrollY);
 
   document.querySelectorAll('#sfFormBody input,#sfFormBody select,#sfFormBody textarea').forEach(el=>el.removeAttribute('disabled'));
   sfEditandoId=null;
