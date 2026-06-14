@@ -1741,7 +1741,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy);color:var(--t
 // ══════════════════════════════════════════════
 // CONFIGURAÇÃO
 // ══════════════════════════════════════════════
-const APP_VERSION='2026-06-14-v8'; // Via Livre integrado // ← atualize esta string a cada deploy
+const APP_VERSION='2026-06-14-v9'; // Via Livre integrado // ← atualize esta string a cada deploy
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycbwNQg7oS7yITWKweCAqi0XvF8Bgn45ua7a9uVyMjPf95RsD59AQJGMwHYTAjguI-JVs/exec';
 const LS={session:'amc_rel_session',agentes:'agentesPersonalizados',rotas:'rotasPersonalizadas'};
 // Limpar sessão ao detectar nova versão — força re-login em todos os usuários
@@ -9469,13 +9469,9 @@ select.sf-input { text-transform: none; }
   .sf-section-title { font-size: 14px; }
   .sf-subsec { padding: 10px; }
   .sf-ck-item { padding: 10px 8px; font-size: 13px; }
-  /* Modal mobile: mesmo padrão do .cov do sistema */
-  #sfModal { align-items: flex-end; padding: 0 !important; }
-  #sfModalBox {
-    max-width: 100vw;
-    max-height: 92vh;
-    border-radius: 16px 16px 0 0;
-  }
+  #sfModal { padding: 0 !important; }
+  #sfModalBox { max-width: 100%; max-height: 92vh; border-radius: 16px 16px 0 0; }
+  #sfFormBody { -webkit-overflow-scrolling: touch; }
   #telaFatais { touch-action: pan-y; }
 }
 
@@ -9515,16 +9511,16 @@ select.sf-input { text-transform: none; }
 </div>
 
 <!-- ── MODAL FORMULÁRIO COMPLETO ── -->
-<div id="sfModal" class="cov" style="z-index:870;align-items:flex-end;">
-  <div id="sfModalBox" style="background:var(--surface2);border:1px solid var(--border2);border-radius:16px 16px 0 0;width:100%;max-width:680px;max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;display:flex;flex-direction:column;">
+<div id="sfModal" class="cov" style="z-index:870;align-items:flex-end;padding:0;">
+  <div id="sfModalBox" style="background:var(--surface2);border:1px solid var(--border2);border-radius:16px 16px 0 0;width:100%;max-width:680px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;">
 
     <!-- Cabeçalho -->
-    <div id="sfModalHeader" style="position:sticky;top:0;z-index:20;background:linear-gradient(135deg,#7f0000,#c62828);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-radius:16px 16px 0 0;">
+    <div id="sfModalHeader" style="flex-shrink:0;background:linear-gradient(135deg,#7f0000,#c62828);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-radius:16px 16px 0 0;">
       <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:16px;letter-spacing:2px;text-transform:uppercase;color:#fff;" id="sfModalTit">⚠ NOVO SINISTRO FATAL</div>
       <button onclick="sfFecharModal()" style="background:rgba(255,255,255,0.15);border:none;border-radius:8px;width:36px;height:36px;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
     </div>
 
-    <div id="sfFormBody" style="padding:14px 16px 24px;display:flex;flex-direction:column;gap:0;">
+    <div id="sfFormBody" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding:14px 16px 24px;display:flex;flex-direction:column;gap:0;">
 
       <!-- ══ 1. DADOS GERAIS ══ -->
       <div class="sf-section">
