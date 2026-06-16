@@ -1746,7 +1746,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy);color:var(--t
 // ══════════════════════════════════════════════
 // CONFIGURAÇÃO
 // ══════════════════════════════════════════════
-const APP_VERSION='2026-06-16-v60'; // Via Livre integrado // ← atualize esta string a cada deploy
+const APP_VERSION='2026-06-16-v90'; // Via Livre integrado // ← atualize esta string a cada deploy
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycbwNQg7oS7yITWKweCAqi0XvF8Bgn45ua7a9uVyMjPf95RsD59AQJGMwHYTAjguI-JVs/exec';
 const LS={session:'amc_rel_session',agentes:'agentesPersonalizados',rotas:'rotasPersonalizadas'};
 // Limpar sessão ao detectar nova versão — força re-login em todos os usuários
@@ -10192,7 +10192,10 @@ function sfGetEnvOpts(){return sfEnvolvidosAtivos.map(id=>{const inf=sfEnvolvido
 
 function sfAddVeiculo(v={}) {
   const id=sfVeiculosAtivos.length>0?Math.max(...sfVeiculosAtivos)+1:1;
-  sfVeiculosAtivos.push(id); sfVeiculosInfo[id]={tipo:'',placa:''};
+  sfVeiculosAtivos.push(id);
+  // Preencher sfVeiculosInfo imediatamente com dados salvos (não esperar onchange)
+  const tipoReal=(v.tipo==='OUTROS'&&v.tipoOutro)?v.tipoOutro:(v.tipo||'');
+  sfVeiculosInfo[id]={tipo:tipoReal,placa:v.placa||''};
   const c=document.getElementById('sfVeiculosContainer');
   const d=document.createElement('div'); d.className='sf-item'; d.dataset.veiculoId=id;
   d.innerHTML=`<button class="sf-btnrem" onclick="sfRemVeiculo(this,${id})"><i class="fas fa-trash"></i></button>
@@ -10436,6 +10439,12 @@ function sfAddEnvolvido(e={}) {
       </select>
     </div>`;
   c.appendChild(d);
+  // Forçar o valor do select de vinculação após inserção no DOM
+  // (necessário para options dinâmicas de veículo geradas por sfGetVeicOpts)
+  if(vinc){
+    const sel=d.querySelector('.e-vinc');
+    if(sel)sel.value=vinc;
+  }
   sfAtualizarFatores(); sfAtualizarTestes();
 }
 
