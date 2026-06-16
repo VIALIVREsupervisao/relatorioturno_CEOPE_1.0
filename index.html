@@ -1746,7 +1746,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy);color:var(--t
 // ══════════════════════════════════════════════
 // CONFIGURAÇÃO
 // ══════════════════════════════════════════════
-const APP_VERSION='2026-06-16-v1'; // Via Livre integrado // ← atualize esta string a cada deploy
+const APP_VERSION='2026-06-16-v2'; // Via Livre integrado // ← atualize esta string a cada deploy
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycbwNQg7oS7yITWKweCAqi0XvF8Bgn45ua7a9uVyMjPf95RsD59AQJGMwHYTAjguI-JVs/exec';
 const LS={session:'amc_rel_session',agentes:'agentesPersonalizados',rotas:'rotasPersonalizadas'};
 // Limpar sessão ao detectar nova versão — força re-login em todos os usuários
@@ -9381,7 +9381,8 @@ body.light-mode .sf-ck-item:has(input:checked) { background: rgba(198,40,40,0.08
 }
 .sf-input:focus { border-color: #c62828; outline: none; background: var(--card); }
 .sf-input::placeholder { text-transform: none; color: var(--text3); }
-textarea.sf-input { resize: vertical; min-height: 70px; touch-action: pan-y; }
+textarea.sf-input { resize: vertical; min-height: 70px; touch-action: pan-y; -webkit-user-select: none; user-select: none; }
+textarea.sf-input:focus { -webkit-user-select: text; user-select: text; }
 select.sf-input { text-transform: none; }
 .sf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .sf-row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
@@ -10162,6 +10163,50 @@ function sfAddVeiculo(v={}) {
 function sfToggleOutroTipoVeic(sel){sel.nextElementSibling.style.display=sel.value==='OUTROS'?'block':'none';}
 function sfAtualizarVeicInfo(id){const item=document.querySelector(`[data-veiculo-id="${id}"]`);if(!item)return;const tipo=item.querySelector('select').value;sfVeiculosInfo[id]={tipo:tipo==='OUTROS'?item.querySelector('.v-tipo-outro').value:tipo,placa:item.querySelectorAll('input')[1]?.value||''};sfAtualizarDRVs();sfAtualizarCondVeic();}
 function sfRemVeiculo(btn,id){if(!confirm('Remover veículo?'))return;btn.parentElement.remove();sfVeiculosAtivos=sfVeiculosAtivos.filter(v=>v!==id);delete sfVeiculosInfo[id];sfAtualizarVinc();sfAtualizarFatores();sfAtualizarDRVs();sfAtualizarCondVeic();}
+function sfRemEnvolvido(btn,id){
+  if(!confirm('Remover envolvido?'))return;
+  btn.closest('.sf-item').remove();
+  sfEnvolvidosAtivos=sfEnvolvidosAtivos.filter(e=>e!==id);
+  delete sfEnvolvidosInfo[id];
+  sfAtualizarFatores();sfAtualizarTestes();sfAtualizarVinc();
+}
+
+function sfAtualizarVinc(){
+  document.querySelectorAll('#sfEnvolvidosContainer .e-vinc').forEach(s=>{
+    const v=s.value;
+    s.innerHTML='<option value="PEDESTRE">Pedestre</option><option value="ANIMAL">Animal</option><option value="NÃO IDENTIFICADO">Não Identificado</option>'+sfGetVeicOpts();
+    if(v)s.value=v;
+  });
+}
+
+function sfAtualizarFatores(){
+  const c=document.getElementById('sfFatoresContainer');
+  if(!c)return;
+  // Salvar valores existentes
+  const salvos={};
+  c.querySelectorAll('[data-fator-id]').forEach(el=>{
+    const id=el.dataset.fatorId;
+    const cap=el.querySelector(`input[name="sfCap-${id}"]:checked`);
+    const cin=el.querySelector(`input[name="sfCin-${id}"]:checked`);
+    salvos[id]={cap:cap?.value,cin:cin?.value};
+  });
+  c.innerHTML='';
+  document.querySelectorAll('#sfEnvolvidosContainer .sf-item').forEach(env=>{
+    const vinc=env.querySelector('.e-vinc')?.value;
+    const id=env.dataset.envolvidoId;
+    if(vinc==='ANIMAL'||vinc==='NÃO IDENTIFICADO')return;
+    const info=sfEnvolvidosInfo[id];
+    const label=info?.nome?`Envolvido ${id} — ${info.nome}`:`Envolvido ${id}`;
+    const s=salvos[id]||{};
+    const div=document.createElement('div');div.className='sf-subsec';div.dataset.fatorId=id;
+    div.innerHTML=`<div class="sf-subsec-tit"><i class="fas fa-user"></i> ${label}</div>
+      <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Capacete:</div>
+      <div class="sf-radio-group">${['SIM','NÃO','SEM INFORMAÇÃO','N/A'].map(v=>`<label class="sf-radio-label"><input type="radio" name="sfCap-${id}" value="${v}"${(s.cap||'N/A')===v?' checked':''}> ${v}</label>`).join('')}</div>
+      <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin:8px 0 4px;">Cinto de Segurança:</div>
+      <div class="sf-radio-group">${['SIM','NÃO','SEM INFORMAÇÃO','N/A'].map(v=>`<label class="sf-radio-label"><input type="radio" name="sfCin-${id}" value="${v}"${(s.cin||'N/A')===v?' checked':''}> ${v}</label>`).join('')}</div>`;
+    c.appendChild(div);
+  });
+}
 
 // ── DRV / Testes / Docs ─────────────────────────────────────
 function sfAddDRV(d={}) {
