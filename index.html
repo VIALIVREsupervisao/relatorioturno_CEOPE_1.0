@@ -1746,7 +1746,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy);color:var(--t
 // ══════════════════════════════════════════════
 // CONFIGURAÇÃO
 // ══════════════════════════════════════════════
-const APP_VERSION='2026-06-16-v50'; // Via Livre integrado // ← atualize esta string a cada deploy
+const APP_VERSION='2026-06-16-v60'; // Via Livre integrado // ← atualize esta string a cada deploy
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycbwNQg7oS7yITWKweCAqi0XvF8Bgn45ua7a9uVyMjPf95RsD59AQJGMwHYTAjguI-JVs/exec';
 const LS={session:'amc_rel_session',agentes:'agentesPersonalizados',rotas:'rotasPersonalizadas'};
 // Limpar sessão ao detectar nova versão — força re-login em todos os usuários
@@ -3074,6 +3074,8 @@ async function evtGerarPDF(){
 let _touchStartY=0;
 document.addEventListener('touchstart',e=>{_touchStartY=e.touches[0].clientY;},{passive:true});
 document.addEventListener('touchmove',e=>{
+  // Não interferir com scroll dentro do modal de sinistros fatais
+  if(e.target&&e.target.closest&&e.target.closest('#sfModalBox'))return;
   const dy=e.touches[0].clientY-_touchStartY;
   if(dy>0&&(window.scrollY||document.documentElement.scrollTop)===0){
     e.preventDefault();
@@ -10010,16 +10012,39 @@ function sfAbrirModal(id) {
   }
   sfAbrirOverlay();
 }
+var _sfTouchStartY=0;
+var _sfTouchHandler=null;
+var _sfTouchStartHandler=null;
 function sfAbrirOverlay(){
   var m=document.getElementById('sfModal');
   if(!m)return;
   m.classList.add('open');
-  // Conter scroll dentro do modal sem travar o box interno
   m.style.overscrollBehavior='none';
-  // NÃO setar overflow:hidden no wrapper para não bloquear scroll do sfModalBox
   document.body.style.overscrollBehavior='none';
   var box=document.getElementById('sfModalBox');
   setTimeout(function(){if(box){box.scrollTop=0;box.style.overflowY='auto';}},50);
+  // Remover handlers anteriores se existirem
+  if(box&&_sfTouchStartHandler)box.removeEventListener('touchstart',_sfTouchStartHandler);
+  if(box&&_sfTouchHandler)box.removeEventListener('touchmove',_sfTouchHandler);
+  if(!box)return;
+  // Handler de touchstart: registra posição inicial
+  _sfTouchStartHandler=function(e){
+    _sfTouchStartY=e.touches[0].clientY;
+  };
+  // Handler de touchmove: controla scroll manual para evitar travamento
+  _sfTouchHandler=function(e){
+    var dy=e.touches[0].clientY-_sfTouchStartY;
+    var atTop=box.scrollTop<=0;
+    var atBottom=box.scrollTop+box.clientHeight>=box.scrollHeight-1;
+    // Se tentando subir (dy<0) mas já no fundo, ou descer (dy>0) mas já no topo
+    // previne o event default para não vazar para o body
+    if((atBottom&&dy<0)||(atTop&&dy>0)){
+      e.preventDefault();
+    }
+    // Caso contrário deixa o scroll nativo do box acontecer normalmente
+  };
+  box.addEventListener('touchstart',_sfTouchStartHandler,{passive:true});
+  box.addEventListener('touchmove',_sfTouchHandler,{passive:false});
 }
 
 function sfFecharModal(force=false) {
@@ -10032,6 +10057,11 @@ function sfFecharModal(force=false) {
   var m=document.getElementById('sfModal');
   if(m){ m.classList.remove('open'); m.style.overscrollBehavior=''; }
   document.body.style.overscrollBehavior='';
+  // Remover touch handlers do box
+  var box=document.getElementById('sfModalBox');
+  if(box&&_sfTouchStartHandler)box.removeEventListener('touchstart',_sfTouchStartHandler);
+  if(box&&_sfTouchHandler)box.removeEventListener('touchmove',_sfTouchHandler);
+  _sfTouchStartHandler=null;_sfTouchHandler=null;
   // Restaurar scroll
 
 
