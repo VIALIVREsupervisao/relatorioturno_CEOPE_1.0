@@ -1746,7 +1746,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy);color:var(--t
 // ══════════════════════════════════════════════
 // CONFIGURAÇÃO
 // ══════════════════════════════════════════════
-const APP_VERSION='2026-06-16-v10'; // Via Livre integrado // ← atualize esta string a cada deploy
+const APP_VERSION='2026-06-16-v25'; // Via Livre integrado // ← atualize esta string a cada deploy
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycbwNQg7oS7yITWKweCAqi0XvF8Bgn45ua7a9uVyMjPf95RsD59AQJGMwHYTAjguI-JVs/exec';
 const LS={session:'amc_rel_session',agentes:'agentesPersonalizados',rotas:'rotasPersonalizadas'};
 // Limpar sessão ao detectar nova versão — força re-login em todos os usuários
@@ -9521,7 +9521,7 @@ select.sf-input { text-transform: none; }
 
 <!-- ── MODAL FORMULÁRIO COMPLETO ── -->
 <div id="sfModal" class="cov" style="z-index:870;align-items:flex-end;">
- <div id="sfModalBox" style="background:var(--surface2);border:1px solid var(--border2);border-radius:16px 16px 0 0;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:none;">
+ <div id="sfModalBox" style="background:var(--surface2);border:1px solid var(--border2);border-radius:16px 16px 0 0;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:none;will-change:scroll-position;">
 
     <!-- Cabeçalho -->
     <div id="sfModalHeader" style="background:linear-gradient(135deg,#7f0000,#c62828);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-radius:16px 16px 0 0;margin:-0px;position:sticky;top:0;z-index:5;">
@@ -9792,6 +9792,8 @@ function sfCharCount(el,id){ const c=document.getElementById(id); if(c) c.textCo
 document.addEventListener('input', function(e){
   const el=e.target;
   if (!el.closest('#sfModal')) return;
+  // Só processar se o elemento tem foco real (não é evento de scroll)
+  if(document.activeElement!==el) return;
   if ((el.tagName==='INPUT'&&el.type==='text')||el.tagName==='TEXTAREA') {
     const p=el.selectionStart; el.value=el.value.toUpperCase();
     try{el.setSelectionRange(p,p);}catch(err){}
@@ -10523,7 +10525,7 @@ function sfAgendarAutoSave(){
       return;
     }
     sfAutoSalvarSilencioso();
-  },8000);
+  },10000);
 }
 async function sfAutoSalvarSilencioso(){
   // Verificar se modal está aberto e se há dados mínimos
