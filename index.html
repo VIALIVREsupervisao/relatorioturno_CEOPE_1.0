@@ -407,65 +407,12 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy);color:var(--t
 .toast.err{border-color:rgba(239,68,68,0.5);color:var(--red2);}
 .cov{position:fixed;inset:0;z-index:600;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;padding:20px;}
 .cov.open{display:flex;}
-/* sfModal ocupa tela toda no mobile — sem padding lateral, sem exposição do fundo */
-#sfModal.open{padding:0;align-items:flex-end;}
-
-/* ── BLOQUEIO DE SCROLL DA PÁGINA DE FUNDO (iOS + Android) ──
-   overflow:hidden no body sozinho não funciona no Safari mobile.
-   A técnica correta é fixar o body na posição atual do scroll. */
-.sf-no-scroll{
-  overflow:hidden!important;
-  /* Impede que o fundo role sob o modal no iOS */
-  position:fixed;
-  width:100%;
-  /* left é setado via JS com o scrollY atual */
-}
-
-/* ── OTIMIZAÇÃO DE SCROLL DO FORMULÁRIO ── */
-#sfFormBody{
-  -webkit-overflow-scrolling:touch;
-  overscroll-behavior:contain;
-  scroll-behavior:auto;
-}
-#sfFormBody textarea{
-  touch-action:pan-y;
-  overscroll-behavior:contain;
-}
-
-/* ── MOBILE: modal ocupa viewport visível real (svh = smallest viewport height)
-   svh exclui a barra do browser, evitando o bug de altura que causava travamento.
-   Fallback: 100% da altura do overlay fixed (que já ocupa a tela toda). ── */
+.sf-no-scroll{overflow:hidden!important;}
+/* sfModal — padrão próprio igual ao bib-painel */
+/* sf-no-scroll usado pelo sfModal */
 @media(max-width:768px){
-  #sfModal.open{
-    /* O overlay já é position:fixed inset:0 — o modal filho ocupa 100% disso */
-    align-items:flex-end;
-  }
-  #sfModalBox{
-    max-width:100%;
-    /* Usa 92svh se disponível (exclui barra do browser) → sem travamento de altura */
-    height:92svh;
-    height:92dvh; /* dvh = dynamic, muda conforme barra aparece/some */
-    max-height:92svh;
-    max-height:92dvh;
-    border-radius:16px 16px 0 0;
-  }
-  #sfFormBody{
-    /* Altura = modal - header fixo (64px) */
-    height:calc(92svh - 64px);
-    height:calc(92dvh - 64px);
-    max-height:calc(92svh - 64px);
-    max-height:calc(92dvh - 64px);
-  }
+  #sfModalBox{max-width:100%;max-height:90vh;border-radius:16px 16px 0 0;}
   #sfModalBox input,#sfModalBox select,#sfModalBox textarea{font-size:16px;}
-}
-/* Fallback para browsers sem svh/dvh (Android mais antigo) */
-@supports not (height:1svh){
-  @media(max-width:768px){
-    /* Usa 85vh conservador para garantir que o conteúdo fique visível
-       mesmo com barra do browser ocupando ~8vh */
-    #sfModalBox{height:85vh;max-height:85vh;}
-    #sfFormBody{height:calc(85vh - 64px);max-height:calc(85vh - 64px);}
-  }
 }
 .cbox{background:var(--surface2);border:1px solid var(--border2);border-radius:12px;padding:24px;width:100%;max-width:320px;text-align:center;}
 .cbox h3{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:18px;margin-bottom:8px;}
@@ -1799,7 +1746,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy);color:var(--t
 // ══════════════════════════════════════════════
 // CONFIGURAÇÃO
 // ══════════════════════════════════════════════
-const APP_VERSION='2026-06-14-v20'; // Via Livre integrado // ← atualize esta string a cada deploy
+const APP_VERSION='2026-06-16-v1'; // Via Livre integrado // ← atualize esta string a cada deploy
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycbwNQg7oS7yITWKweCAqi0XvF8Bgn45ua7a9uVyMjPf95RsD59AQJGMwHYTAjguI-JVs/exec';
 const LS={session:'amc_rel_session',agentes:'agentesPersonalizados',rotas:'rotasPersonalizadas'};
 // Limpar sessão ao detectar nova versão — força re-login em todos os usuários
@@ -3124,14 +3071,9 @@ async function evtGerarPDF(){
 
 
 // Bloquear pull-to-refresh no mobile
-// IMPORTANTE: só bloqueia quando o modal NÃO está aberto.
-// O listener passive:false no document bloqueia o thread de scroll de TUDO,
-// incluindo o sfFormBody — era a causa principal dos travamentos no mobile.
 let _touchStartY=0;
 document.addEventListener('touchstart',e=>{_touchStartY=e.touches[0].clientY;},{passive:true});
 document.addEventListener('touchmove',e=>{
-  // Se o modal estiver aberto, não interferir — o sfFormBody cuida do próprio scroll
-  if(document.getElementById('sfModal')?.classList.contains('open')) return;
   const dy=e.touches[0].clientY-_touchStartY;
   if(dy>0&&(window.scrollY||document.documentElement.scrollTop)===0){
     e.preventDefault();
@@ -9439,21 +9381,19 @@ body.light-mode .sf-ck-item:has(input:checked) { background: rgba(198,40,40,0.08
 }
 .sf-input:focus { border-color: #c62828; outline: none; background: var(--card); }
 .sf-input::placeholder { text-transform: none; color: var(--text3); }
-textarea.sf-input { resize: vertical; min-height: 70px; }
+textarea.sf-input { resize: vertical; min-height: 70px; touch-action: pan-y; }
 select.sf-input { text-transform: none; }
 .sf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .sf-row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
 .sf-item {
   background: rgba(198,40,40,0.07); border: 1px solid rgba(198,40,40,0.25);
   border-left: 4px solid #c62828; border-radius: 8px; padding: 12px 42px 12px 12px;
-  margin-bottom: 8px; position: relative;
-  /* REMOVIDO: animation: fadeinUp .2s — causava recalculo de layout durante scroll mobile */
+  margin-bottom: 8px; position: relative; animation: fadeinUp .2s;
 }
 .sf-item-blue {
   background: rgba(59,130,246,0.07); border: 1px solid rgba(59,130,246,0.25);
   border-left: 4px solid #3b82f6; border-radius: 8px; padding: 12px 42px 12px 12px;
-  margin-bottom: 8px; position: relative;
-  /* REMOVIDO: animation: fadeinUp .2s */
+  margin-bottom: 8px; position: relative; animation: fadeinUp .2s;
 }
 .sf-item-tit {
   font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 11px;
@@ -9483,7 +9423,7 @@ select.sf-input { text-transform: none; }
   display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text);
   cursor: pointer; padding: 6px 8px; border-radius: 6px;
   border: 1px solid var(--border); background: rgba(255,255,255,0.03);
-  /* REMOVIDO: transition: background .15s — múltiplos elementos com transition causam jank no scroll mobile */
+  transition: background .15s;
 }
 .sf-ck-item:has(input:checked) { background: rgba(198,40,40,0.12); border-color: rgba(198,40,40,0.4); }
 .sf-ck-item input[type="checkbox"] { accent-color: #c62828; width: 15px; height: 15px; flex-shrink: 0; }
@@ -9573,15 +9513,15 @@ select.sf-input { text-transform: none; }
 
 <!-- ── MODAL FORMULÁRIO COMPLETO ── -->
 <div id="sfModal" class="cov" style="z-index:870;align-items:flex-end;">
- <div id="sfModalBox" style="background:var(--surface2);border:1px solid var(--border2);border-radius:16px 16px 0 0;width:100%;max-width:680px;max-height:90vh;max-height:90dvh;height:90vh;height:90dvh;display:flex;flex-direction:column;overflow:hidden;">
+ <div id="sfModalBox" style="background:var(--surface2);border:1px solid var(--border2);border-radius:16px 16px 0 0;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:none;">
 
-    <!-- Cabeçalho — FIXO no topo (sem sticky, compatível com Edge/Safari mobile) -->
-    <div id="sfModalHeader" style="background:linear-gradient(135deg,#7f0000,#c62828);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-radius:16px 16px 0 0;flex-shrink:0;z-index:5;width:100%;">
+    <!-- Cabeçalho -->
+    <div id="sfModalHeader" style="background:linear-gradient(135deg,#7f0000,#c62828);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-radius:16px 16px 0 0;margin:-0px;position:sticky;top:0;z-index:5;">
       <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:16px;letter-spacing:2px;text-transform:uppercase;color:#fff;" id="sfModalTit">⚠ NOVO SINISTRO FATAL</div>
       <button onclick="sfFecharModal()" style="background:rgba(255,255,255,0.15);border:none;border-radius:8px;width:36px;height:36px;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
     </div>
 
-   <div id="sfFormBody" style="overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;flex:1;">
+   <div id="sfFormBody">
 
       <!-- ══ 1. DADOS GERAIS ══ -->
       <div class="sf-section">
@@ -9802,7 +9742,7 @@ select.sf-input { text-transform: none; }
       </div>
 
           <!-- Botões de ação -->
-      <div style="padding:14px 16px 48px;display:flex;gap:8px;flex-wrap:wrap;">
+      <div style="padding:14px 16px 24px;display:flex;gap:8px;flex-wrap:wrap;">
         <button id="sfBtnSalvar" onclick="sfSalvar()" style="flex:2;min-width:140px;padding:14px;background:linear-gradient(135deg,#c62828,#7f0000);border:none;border-radius:8px;color:#fff;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:15px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;"><i class="fas fa-cloud-upload-alt"></i> Salvar na Nuvem</button>
         <button id="sfBtnPDF" onclick="sfGerarPDF()" style="flex:1;min-width:90px;padding:14px;background:linear-gradient(135deg,#1d4ed8,#2563eb);border:none;border-radius:8px;color:#fff;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;"><i class="fas fa-file-pdf"></i> PDF</button>
         <button onclick="sfFecharModal()" style="flex:1;min-width:70px;padding:14px;background:var(--surface3);border:1px solid var(--border2);border-radius:8px;color:var(--text2);font-family:'Rajdhani',sans-serif;font-weight:700;font-size:13px;cursor:pointer;">Cancelar</button>
@@ -9836,33 +9776,20 @@ function sfIso(d) { return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2
 function sfFmtBR(s) { if(!s)return''; const p=s.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; }
 function sfPodeEditar() { return ['admin','supervisor'].includes(G.role); }
 function sfPodeLer()    { return ['admin','supervisor','central','chefia'].includes(G.role); }
-// sfCharCount com debounce para evitar travamento no mobile
-var _sfCharTimers={};
-function sfCharCount(el,id){
-  clearTimeout(_sfCharTimers[id]);
-  _sfCharTimers[id]=setTimeout(function(){
-    var c=document.getElementById(id);
-    if(c) c.textContent=el.value.length+' caracteres';
-  },120);
-}
+function sfCharCount(el,id){ const c=document.getElementById(id); if(c) c.textContent=el.value.length+' caracteres'; }
 
 // scroll controlado por CSS
 
 // Força maiúsculo + agenda auto-save em inputs do modal
-// O listener usa requestAnimationFrame para não bloquear o thread principal durante scroll
-var _sfInputTimer = null;
 document.addEventListener('input', function(e){
   const el=e.target;
   if (!el.closest('#sfModal')) return;
-  // Maiúsculo: imediato (não pode ser adiado pois o cursor muda)
   if ((el.tagName==='INPUT'&&el.type==='text')||el.tagName==='TEXTAREA') {
     const p=el.selectionStart; el.value=el.value.toUpperCase();
     try{el.setSelectionRange(p,p);}catch(err){}
   }
-  // Auto-save: debounced, fora do frame de input
-  clearTimeout(_sfInputTimer);
-  _sfInputTimer = setTimeout(sfAgendarAutoSave, 300);
-}, {passive: true});
+  sfAgendarAutoSave();
+});
 document.addEventListener('change', function(e){
   if (!e.target.closest('#sfModal')) return;
   sfAgendarAutoSave();
@@ -10041,7 +9968,7 @@ function sfVerDetalhe(idx) {
   document.querySelectorAll('#sfFormBody button').forEach(el=>el.setAttribute('disabled','disabled'));
   document.getElementById('sfBtnSalvar').style.display='none';
   document.getElementById('sfBtnPDF').style.display=''; document.getElementById('sfBtnPDF').removeAttribute('disabled');
-  sfAbrirOverlay();
+  document.getElementById('sfModal').classList.add('open');
 }
 
 // ── Abrir modal (novo ou editar) ──────────────────────────────
@@ -10069,34 +9996,12 @@ function sfAbrirModal(id) {
   }
   sfAbrirOverlay();
 }
-// Guarda posição do scroll ao abrir modal (técnica iOS scroll lock)
-var _sfScrollY = 0;
-
 function sfAbrirOverlay(){
   var m=document.getElementById('sfModal');
   if(!m)return;
-
-  // Congela página na posição atual (funciona no iOS/Android/Edge)
-  _sfScrollY = window.scrollY || window.pageYOffset || 0;
-  document.body.style.top = '-' + _sfScrollY + 'px';
-  document.body.classList.add('sf-no-scroll');
-
-  // Bloqueia toques no overlay escuro para evitar que o browser
-  // mostre/esconda a barra de navegação (causa da variação de vh e travamento)
-  m.addEventListener('touchstart', _sfBlockOverlayTouch, {passive:false});
-  m.addEventListener('touchmove',  _sfBlockOverlayTouch, {passive:false});
-
   m.classList.add('open');
-  var body=document.getElementById('sfFormBody');
-  setTimeout(function(){if(body)body.scrollTop=0;},50);
-}
-
-// Cancela toque na área escura do overlay, deixa passar apenas dentro do card
-function _sfBlockOverlayTouch(e){
-  if(!e.target.closest('#sfModalBox')){
-    e.preventDefault();
-    e.stopPropagation();
-  }
+  var box=document.getElementById('sfModalBox');
+  setTimeout(function(){if(box)box.scrollTop=0;},50);
 }
 
 function sfFecharModal(force=false) {
@@ -10107,15 +10012,9 @@ function sfFecharModal(force=false) {
     }
   }
   var m=document.getElementById('sfModal');
-  if(m){
-    m.classList.remove('open');
-    m.removeEventListener('touchstart', _sfBlockOverlayTouch);
-    m.removeEventListener('touchmove',  _sfBlockOverlayTouch);
-  }
-  // Restaura scroll da página exatamente onde estava
-  document.body.classList.remove('sf-no-scroll');
-  document.body.style.top = '';
-  window.scrollTo(0, _sfScrollY);
+  if(m) m.classList.remove('open');
+  // Restaurar scroll
+
 
   document.querySelectorAll('#sfFormBody input,#sfFormBody select,#sfFormBody textarea').forEach(el=>el.removeAttribute('disabled'));
   sfEditandoId=null;
@@ -10263,6 +10162,96 @@ function sfAddVeiculo(v={}) {
 function sfToggleOutroTipoVeic(sel){sel.nextElementSibling.style.display=sel.value==='OUTROS'?'block':'none';}
 function sfAtualizarVeicInfo(id){const item=document.querySelector(`[data-veiculo-id="${id}"]`);if(!item)return;const tipo=item.querySelector('select').value;sfVeiculosInfo[id]={tipo:tipo==='OUTROS'?item.querySelector('.v-tipo-outro').value:tipo,placa:item.querySelectorAll('input')[1]?.value||''};sfAtualizarDRVs();sfAtualizarCondVeic();}
 function sfRemVeiculo(btn,id){if(!confirm('Remover veículo?'))return;btn.parentElement.remove();sfVeiculosAtivos=sfVeiculosAtivos.filter(v=>v!==id);delete sfVeiculosInfo[id];sfAtualizarVinc();sfAtualizarFatores();sfAtualizarDRVs();sfAtualizarCondVeic();}
+
+// ── DRV / Testes / Docs ─────────────────────────────────────
+function sfAddDRV(d={}) {
+  const div=document.createElement('div');div.className='sf-item';
+  div.innerHTML=`<button class="sf-btnrem" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>
+    <div class="sf-row">
+      <div><label class="sf-label">Veículo</label>
+        <select class="sf-input drv-veiculo">
+          <option value="">Selecione</option>${sfGetVeicOptsSimples()}
+        </select>
+      </div>
+      <div><label class="sf-label">Número DRV</label>
+        <input type="text" class="sf-input drv-numero" value="${d.numero||''}">
+      </div>
+    </div>`;
+  const c=document.getElementById('sfDRVContainer');
+  if(c){c.appendChild(div);if(d.veiculo)div.querySelector('.drv-veiculo').value=d.veiculo;}
+}
+
+function sfAddTeste(t={}) {
+  const div=document.createElement('div');div.className='sf-item';
+  div.innerHTML=`<button class="sf-btnrem" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>
+    <div class="sf-row">
+      <div><label class="sf-label">Envolvido</label>
+        <select class="sf-input teste-envolvido">
+          <option value="">Selecione</option>${sfGetEnvOpts()}
+        </select>
+      </div>
+      <div><label class="sf-label">Nº Teste</label>
+        <input type="text" class="sf-input" value="${t.numero||''}">
+      </div>
+    </div>
+    <label class="sf-label">Resultado</label>
+    <select class="sf-input teste-resultado">
+      <option value="NEGATIVO"${(t.resultado||'')==='NEGATIVO'?' selected':''}>Negativo</option>
+      <option value="POSITIVO"${t.resultado==='POSITIVO'?' selected':''}>Positivo</option>
+      <option value="RECUSOU"${t.resultado==='RECUSOU'?' selected':''}>Recusou</option>
+      <option value="NÃO REALIZADO"${t.resultado==='NÃO REALIZADO'?' selected':''}>Não Realizado</option>
+    </select>`;
+  const c=document.getElementById('sfTesteContainer');
+  if(c){c.appendChild(div);if(t.envolvido)div.querySelector('.teste-envolvido').value=t.envolvido;}
+}
+
+function sfAddDoc(d={}) {
+  const div=document.createElement('div');div.className='sf-item';
+  div.innerHTML=`<button class="sf-btnrem" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>
+    <div class="sf-row">
+      <div><label class="sf-label">Tipo</label><input type="text" class="sf-input" placeholder="LAUDO, BO..." value="${d.tipo||''}"></div>
+      <div><label class="sf-label">Número</label><input type="text" class="sf-input" value="${d.numero||''}"></div>
+    </div>`;
+  const c=document.getElementById('sfDocContainer');
+  if(c) c.appendChild(div);
+}
+
+function sfAtualizarDRVs(){
+  document.querySelectorAll('#sfDRVContainer .drv-veiculo').forEach(s=>{
+    const v=s.value;
+    s.innerHTML='<option value="">Selecione</option>'+sfGetVeicOptsSimples();
+    if(v)s.value=v;
+  });
+}
+
+function sfAtualizarTestes(){
+  document.querySelectorAll('#sfTesteContainer .teste-envolvido').forEach(s=>{
+    const v=s.value;
+    s.innerHTML='<option value="">Selecione</option>'+sfGetEnvOpts();
+    if(v)s.value=v;
+  });
+}
+
+function sfAtualizarCondVeic(){
+  const c=document.getElementById('sfCondicoesVeicContainer');
+  if(!c)return;
+  const existentes={};
+  c.querySelectorAll('[data-veic-cond]').forEach(el=>{
+    existentes[el.dataset.veicCond]=el.querySelector('textarea').value;
+  });
+  c.innerHTML='';
+  if(!sfVeiculosAtivos.length){
+    c.innerHTML='<p style="color:var(--text3);font-size:12px;margin:4px 0;">Adicione veículos na seção 2.</p>';
+    return;
+  }
+  sfVeiculosAtivos.forEach(id=>{
+    const inf=sfVeiculosInfo[id];
+    const lab=inf&&(inf.tipo||inf.placa)?`Veículo ${id} (${inf.tipo}${inf.placa?' - '+inf.placa:''})`:`Veículo ${id}`;
+    const div=document.createElement('div');div.dataset.veicCond=id;div.style.marginBottom='8px';
+    div.innerHTML=`<label class="sf-label">${lab}</label><textarea class="sf-input" rows="2" placeholder="CONDIÇÕES DO VEÍCULO, PNEUS, FREIOS, LUZES...">${existentes[id]||''}</textarea>`;
+    c.appendChild(div);
+  });
+}
 
 // ── Envolvidos ────────────────────────────────────────────────
 function sfAddEnvolvido(e={}) {
