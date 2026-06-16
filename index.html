@@ -1746,7 +1746,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy);color:var(--t
 // ══════════════════════════════════════════════
 // CONFIGURAÇÃO
 // ══════════════════════════════════════════════
-const APP_VERSION='2026-06-16-v40'; // Via Livre integrado // ← atualize esta string a cada deploy
+const APP_VERSION='2026-06-16-v50'; // Via Livre integrado // ← atualize esta string a cada deploy
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycbwNQg7oS7yITWKweCAqi0XvF8Bgn45ua7a9uVyMjPf95RsD59AQJGMwHYTAjguI-JVs/exec';
 const LS={session:'amc_rel_session',agentes:'agentesPersonalizados',rotas:'rotasPersonalizadas'};
 // Limpar sessão ao detectar nova versão — força re-login em todos os usuários
@@ -9482,6 +9482,10 @@ select.sf-input { text-transform: none; }
   .sf-subsec { padding: 10px; }
   .sf-ck-item { padding: 10px 8px; font-size: 13px; }
   #telaFatais { touch-action: pan-y; }
+  /* Garantir que cards filhos não bloqueiem scroll do modal no mobile */
+  #sfModalBox { touch-action: pan-y; }
+  #sfFormBody { touch-action: pan-y; }
+  .sf-item, .sf-item-blue, .sf-subsec, .sf-section { touch-action: pan-y; }
 }
 
 </style>
@@ -9521,7 +9525,7 @@ select.sf-input { text-transform: none; }
 
 <!-- ── MODAL FORMULÁRIO COMPLETO ── -->
 <div id="sfModal" class="cov" style="z-index:870;align-items:flex-end;">
- <div id="sfModalBox" style="background:var(--surface2);border:1px solid var(--border2);border-radius:16px 16px 0 0;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:none;will-change:scroll-position;">
+ <div id="sfModalBox" style="background:var(--surface2);border:1px solid var(--border2);border-radius:16px 16px 0 0;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;will-change:scroll-position;touch-action:pan-y;">
 
     <!-- Cabeçalho -->
     <div id="sfModalHeader" style="background:linear-gradient(135deg,#7f0000,#c62828);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-radius:16px 16px 0 0;margin:-0px;position:sticky;top:0;z-index:5;">
@@ -10010,13 +10014,12 @@ function sfAbrirOverlay(){
   var m=document.getElementById('sfModal');
   if(!m)return;
   m.classList.add('open');
-  // Impedir que scroll vaze do modal para o body
+  // Conter scroll dentro do modal sem travar o box interno
   m.style.overscrollBehavior='none';
-  m.style.overflow='hidden';
-  // Impedir scroll do body sem usar position:fixed (que causa travamento)
+  // NÃO setar overflow:hidden no wrapper para não bloquear scroll do sfModalBox
   document.body.style.overscrollBehavior='none';
   var box=document.getElementById('sfModalBox');
-  setTimeout(function(){if(box)box.scrollTop=0;},50);
+  setTimeout(function(){if(box){box.scrollTop=0;box.style.overflowY='auto';}},50);
 }
 
 function sfFecharModal(force=false) {
@@ -10027,7 +10030,7 @@ function sfFecharModal(force=false) {
     }
   }
   var m=document.getElementById('sfModal');
-  if(m){ m.classList.remove('open'); m.style.overscrollBehavior=''; m.style.overflow=''; }
+  if(m){ m.classList.remove('open'); m.style.overscrollBehavior=''; }
   document.body.style.overscrollBehavior='';
   // Restaurar scroll
 
@@ -10184,6 +10187,14 @@ function sfRemEnvolvido(btn,id){
   sfEnvolvidosAtivos=sfEnvolvidosAtivos.filter(e=>e!==id);
   delete sfEnvolvidosInfo[id];
   sfAtualizarFatores();sfAtualizarTestes();sfAtualizarVinc();
+}
+function sfAtualizarEnvInfo(id){
+  const item=document.querySelector(`[data-envolvido-id="${id}"]`);
+  if(!item)return;
+  const nome=(item.querySelector('.e-nome')?.value||'').trim();
+  if(!sfEnvolvidosInfo[id])sfEnvolvidosInfo[id]={};
+  sfEnvolvidosInfo[id].nome=nome;
+  sfAtualizarTestes();sfAtualizarFatores();
 }
 
 function sfAtualizarVinc(){
@@ -10367,7 +10378,7 @@ function sfAddEnvolvido(e={}) {
     </div>
     <div class="campos-pessoa campo-oculto" style="${isPessoa?'':'display:none;'}">
       <label class="sf-label">Nome</label>
-      <input type="text" class="sf-input e-nome" value="${e.nome||''}" onchange="sfAtualizarEnvInfo(${id})">
+      <input type="text" class="sf-input e-nome" value="${e.nome||''}" oninput="sfAtualizarEnvInfo(${id})" onchange="sfAtualizarEnvInfo(${id})">
       <div class="sf-row">
         <div><label class="sf-label">RG</label><input type="text" class="sf-input e-rg" inputmode="numeric" maxlength="20" oninput="this.value=this.value.replace(/\\D/g,'')" value="${e.rg||''}"></div>
         <div><label class="sf-label">CPF</label><input type="text" class="sf-input e-cpf" inputmode="numeric" maxlength="14" oninput="sfMascaraCPF(this)" value="${e.cpf||''}"></div>
