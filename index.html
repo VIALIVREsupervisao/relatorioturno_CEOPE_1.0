@@ -1746,7 +1746,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy);color:var(--t
 // ══════════════════════════════════════════════
 // CONFIGURAÇÃO
 // ══════════════════════════════════════════════
-const APP_VERSION='2026-06-16-v90'; // Via Livre integrado // ← atualize esta string a cada deploy
+const APP_VERSION='2026-06-16-v99'; // Via Livre integrado // ← atualize esta string a cada deploy
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycbwNQg7oS7yITWKweCAqi0XvF8Bgn45ua7a9uVyMjPf95RsD59AQJGMwHYTAjguI-JVs/exec';
 const LS={session:'amc_rel_session',agentes:'agentesPersonalizados',rotas:'rotasPersonalizadas'};
 // Limpar sessão ao detectar nova versão — força re-login em todos os usuários
@@ -9912,7 +9912,7 @@ function sfRenderLista() {
       <div style="display:flex;align-items:center;gap:10px;">
         <div style="background:rgba(198,40,40,0.2);border:1px solid rgba(198,40,40,0.4);border-radius:8px;padding:5px 9px;text-align:center;flex-shrink:0;">
           <div style="font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:700;color:#ef4444;">${nVit}</div>
-          <div style="font-size:7px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(239,68,68,0.7);">FATAL</div>
+          <div style="font-size:7px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(239,68,68,0.7);">${nVit===1?'VÍTIMA FATAL':'VÍTIMAS FATAIS'}</div>
         </div>
         <div style="flex:1;min-width:0;">
           <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s.tipo||'SEM TIPO'}</div>
