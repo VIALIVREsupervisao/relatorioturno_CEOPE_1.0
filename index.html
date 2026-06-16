@@ -9381,8 +9381,7 @@ body.light-mode .sf-ck-item:has(input:checked) { background: rgba(198,40,40,0.08
 }
 .sf-input:focus { border-color: #c62828; outline: none; background: var(--card); }
 .sf-input::placeholder { text-transform: none; color: var(--text3); }
-textarea.sf-input { resize: vertical; min-height: 70px; touch-action: pan-y; -webkit-user-select: none; user-select: none; }
-textarea.sf-input:focus { -webkit-user-select: text; user-select: text; }
+textarea.sf-input { resize: vertical; min-height: 70px; touch-action: pan-y; }
 select.sf-input { text-transform: none; }
 .sf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .sf-row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
@@ -10001,6 +10000,11 @@ function sfAbrirOverlay(){
   var m=document.getElementById('sfModal');
   if(!m)return;
   m.classList.add('open');
+  // Impedir que scroll vaze do modal para o body
+  m.style.overscrollBehavior='none';
+  m.style.overflow='hidden';
+  // Impedir scroll do body sem usar position:fixed (que causa travamento)
+  document.body.style.overscrollBehavior='none';
   var box=document.getElementById('sfModalBox');
   setTimeout(function(){if(box)box.scrollTop=0;},50);
 }
@@ -10013,7 +10017,8 @@ function sfFecharModal(force=false) {
     }
   }
   var m=document.getElementById('sfModal');
-  if(m) m.classList.remove('open');
+  if(m){ m.classList.remove('open'); m.style.overscrollBehavior=''; m.style.overflow=''; }
+  document.body.style.overscrollBehavior='';
   // Restaurar scroll
 
 
