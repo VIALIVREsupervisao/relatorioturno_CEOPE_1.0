@@ -1746,7 +1746,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy);color:var(--t
 // ══════════════════════════════════════════════
 // CONFIGURAÇÃO
 // ══════════════════════════════════════════════
-const APP_VERSION='2026-06-16-v2'; // Via Livre integrado // ← atualize esta string a cada deploy
+const APP_VERSION='2026-06-16-v10'; // Via Livre integrado // ← atualize esta string a cada deploy
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycbwNQg7oS7yITWKweCAqi0XvF8Bgn45ua7a9uVyMjPf95RsD59AQJGMwHYTAjguI-JVs/exec';
 const LS={session:'amc_rel_session',agentes:'agentesPersonalizados',rotas:'rotasPersonalizadas'};
 // Limpar sessão ao detectar nova versão — força re-login em todos os usuários
@@ -5241,7 +5241,15 @@ function trocarAba(aba){
     if(srvAutoTimer) clearInterval(srvAutoTimer);
     srvAutoTimer=setInterval(function(){srvLoadRecords(false,true);srvLoadRenditions(false,true);},60000);
   }else{ if(srvAutoTimer&&!isServicos){clearInterval(srvAutoTimer);srvAutoTimer=null;} }
-  if(isFatais){ sfInit(); if(sfAutoTimer)clearInterval(sfAutoTimer); sfAutoTimer=setInterval(()=>sfCarregar(false),60000); }else{ if(typeof sfAutoTimer!=='undefined'&&sfAutoTimer){clearInterval(sfAutoTimer);sfAutoTimer=null;} }
+  if(isFatais){ sfInit(); if(sfAutoTimer)clearInterval(sfAutoTimer); sfAutoTimer=setInterval(()=>sfCarregar(false),60000); }else{
+  // Ao sair da aba fatais, tentar auto-salvar o que estiver aberto
+  const sfM=document.getElementById('sfModal');
+  if(sfM&&sfM.classList.contains('open')){
+    sfAutoSalvarSilencioso();
+    sfFecharModal(true);
+  }
+  if(typeof sfAutoTimer!=='undefined'&&sfAutoTimer){clearInterval(sfAutoTimer);sfAutoTimer=null;}
+}
   if(isRel){
     // Recarregar relatório ao voltar para a aba (mostra seta)
     carregarRelatorio(false,false);
@@ -10166,7 +10174,7 @@ function sfAddVeiculo(v={}) {
   sfAtualizarVinc(); sfAtualizarFatores(); sfAtualizarDRVs(); sfAtualizarCondVeic();
 }
 function sfToggleOutroTipoVeic(sel){sel.nextElementSibling.style.display=sel.value==='OUTROS'?'block':'none';}
-function sfAtualizarVeicInfo(id){const item=document.querySelector(`[data-veiculo-id="${id}"]`);if(!item)return;const tipo=item.querySelector('select').value;sfVeiculosInfo[id]={tipo:tipo==='OUTROS'?item.querySelector('.v-tipo-outro').value:tipo,placa:item.querySelectorAll('input')[1]?.value||''};sfAtualizarDRVs();sfAtualizarCondVeic();}
+function sfAtualizarVeicInfo(id){const item=document.querySelector(`[data-veiculo-id="${id}"]`);if(!item)return;const tipo=item.querySelector('select').value;sfVeiculosInfo[id]={tipo:tipo==='OUTROS'?item.querySelector('.v-tipo-outro').value:tipo,placa:item.querySelectorAll('input')[1]?.value||''};sfAtualizarDRVs();sfAtualizarCondVeic();sfAtualizarFatores();}
 function sfRemVeiculo(btn,id){if(!confirm('Remover veículo?'))return;btn.parentElement.remove();sfVeiculosAtivos=sfVeiculosAtivos.filter(v=>v!==id);delete sfVeiculosInfo[id];sfAtualizarVinc();sfAtualizarFatores();sfAtualizarDRVs();sfAtualizarCondVeic();}
 function sfRemEnvolvido(btn,id){
   if(!confirm('Remover envolvido?'))return;
@@ -10197,18 +10205,27 @@ function sfAtualizarFatores(){
   });
   c.innerHTML='';
   document.querySelectorAll('#sfEnvolvidosContainer .sf-item').forEach(env=>{
-    const vinc=env.querySelector('.e-vinc')?.value;
+    const vincVal=env.querySelector('.e-vinc')?.value||'';
     const id=env.dataset.envolvidoId;
-    if(vinc==='ANIMAL'||vinc==='NÃO IDENTIFICADO')return;
+    if(vincVal==='ANIMAL'||vincVal==='NÃO IDENTIFICADO'||vincVal==='')return;
     const info=sfEnvolvidosInfo[id];
     const label=info?.nome?`Envolvido ${id} — ${info.nome}`:`Envolvido ${id}`;
     const s=salvos[id]||{};
+    // Detectar tipo do veículo vinculado
+    const veicNum=vincVal.match(/VEÍCULO (\d+)/)?.[1];
+    const veicTipo=veicNum?sfVeiculosInfo[veicNum]?.tipo||'':'';
+    const motoTipos=['MOTOCICLETA','QUADRICICLO','BICICLETA'];
+    const cintoTipos=['AUTOMÓVEL','CAMINHÃO','ÔNIBUS','VEÍCULO AUTOPROPELIDO'];
+    const isPedestreEnv=vincVal==='PEDESTRE';
+    const isMoto=motoTipos.includes(veicTipo);
+    const temCap=!isPedestreEnv&&(isMoto||veicTipo==='');
+    const temCin=!isPedestreEnv&&!isMoto&&(cintoTipos.includes(veicTipo)||veicTipo==='');
+    if(!temCap&&!temCin)return;
     const div=document.createElement('div');div.className='sf-subsec';div.dataset.fatorId=id;
-    div.innerHTML=`<div class="sf-subsec-tit"><i class="fas fa-user"></i> ${label}</div>
-      <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Capacete:</div>
-      <div class="sf-radio-group">${['SIM','NÃO','SEM INFORMAÇÃO','N/A'].map(v=>`<label class="sf-radio-label"><input type="radio" name="sfCap-${id}" value="${v}"${(s.cap||'N/A')===v?' checked':''}> ${v}</label>`).join('')}</div>
-      <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin:8px 0 4px;">Cinto de Segurança:</div>
-      <div class="sf-radio-group">${['SIM','NÃO','SEM INFORMAÇÃO','N/A'].map(v=>`<label class="sf-radio-label"><input type="radio" name="sfCin-${id}" value="${v}"${(s.cin||'N/A')===v?' checked':''}> ${v}</label>`).join('')}</div>`;
+    let html=`<div class="sf-subsec-tit"><i class="fas fa-user"></i> ${label}</div>`;
+    if(temCap){html+=`<div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Capacete:</div><div class="sf-radio-group">${['SIM','NÃO','SEM INFORMAÇÃO','N/A'].map(v=>`<label class="sf-radio-label"><input type="radio" name="sfCap-${id}" value="${v}"${(s.cap||'N/A')===v?' checked':''}> ${v}</label>`).join('')}</div>`;}
+    if(temCin){html+=`<div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin:8px 0 4px;">Cinto de Segurança:</div><div class="sf-radio-group">${['SIM','NÃO','SEM INFORMAÇÃO','N/A'].map(v=>`<label class="sf-radio-label"><input type="radio" name="sfCin-${id}" value="${v}"${(s.cin||'N/A')===v?' checked':''}> ${v}</label>`).join('')}</div>`;}
+    div.innerHTML=html;
     c.appendChild(div);
   });
 }
@@ -10310,14 +10327,15 @@ function sfAddEnvolvido(e={}) {
   const c=document.getElementById('sfEnvolvidosContainer');
   const d=document.createElement('div'); d.className='sf-item'; d.dataset.envolvidoId=id;
   // Calcular visibilidade inicial
-  const vinc=e.vinculo||'PEDESTRE';
+  const vinc=e.vinculo||'';
   const isAnimal=vinc==='ANIMAL';
   const isNaoId=vinc==='NÃO IDENTIFICADO';
-  const isPessoa=!isAnimal&&!isNaoId;
+  const isPessoa=vinc!==''&&!isAnimal&&!isNaoId;
   d.innerHTML=`<button class="sf-btnrem" onclick="sfRemEnvolvido(this,${id})"><i class="fas fa-trash"></i></button>
     <div class="sf-item-tit">Envolvido ${id}</div>
-    <label class="sf-label">Vinculação</label>
+    <label class="sf-label">Vinculação *</label>
     <select class="sf-input e-vinc" onchange="sfToggleCamposEnv(this);sfAtualizarEnvInfo(${id})">
+      <option value="">-- Selecione --</option>
       <option value="PEDESTRE"${vinc==='PEDESTRE'?' selected':''}>Pedestre</option>
       <option value="ANIMAL"${vinc==='ANIMAL'?' selected':''}>Animal</option>
       <option value="NÃO IDENTIFICADO"${vinc==='NÃO IDENTIFICADO'?' selected':''}>Não Identificado</option>
@@ -10330,6 +10348,7 @@ function sfAddEnvolvido(e={}) {
     <div class="campos-condicao" style="display:block;">
       <label class="sf-label">Condição</label>
       <select class="sf-input e-condicao">
+        <option value="">-- Selecione --</option>
         <option value="VÍTIMA FATAL"${(e.condicao||'')==='VÍTIMA FATAL'?' selected':''}>Vítima Fatal</option>
         <option value="FERIDO GRAVE"${e.condicao==='FERIDO GRAVE'?' selected':''}>Ferido Grave</option>
         <option value="FERIDO LEVE"${e.condicao==='FERIDO LEVE'?' selected':''}>Ferido Leve</option>
@@ -10386,7 +10405,7 @@ function sfAddTestemunha(t={}) {
   d.innerHTML=`<button class="sf-btnrem" style="background:rgba(59,130,246,0.18);border-color:rgba(59,130,246,0.35);color:#60a5fa;" onclick="sfRemTestemunha(this,${id})"><i class="fas fa-trash"></i></button>
     <div class="sf-item-tit">Testemunha ${id}</div>
     <label class="sf-label">Nome</label><input type="text" class="sf-input t-nome" placeholder="NOME COMPLETO" value="${t.nome||''}">
-    <div class="sf-row"><div><label class="sf-label">Telefone</label><input type="text" class="sf-input t-fone" placeholder="(85) 99999-9999" value="${t.telefone||''}"></div><div><label class="sf-label">RG/CPF</label><input type="text" class="sf-input t-doc" value="${t.doc||''}"></div></div>
+    <div class="sf-row"><div><label class="sf-label">Telefone</label><input type="text" class="sf-input t-fone" placeholder="(85) 99999-9999" value="${t.telefone||'(85) '}" oninput="sfMascaraTel(this)" inputmode="numeric" maxlength="15"></div><div><label class="sf-label">RG/CPF</label><input type="text" class="sf-input t-doc" value="${t.doc||''}"></div></div>
     <label class="sf-label">Declaração / Depoimento</label><textarea class="sf-input t-decl" rows="3">${t.declaracao||''}</textarea>`;
   c.appendChild(d);
 }
@@ -10416,6 +10435,18 @@ function sfAddOrgao(tipo,v={}) {
 }
 
 // ── Máscaras de campos ────────────────────────────────────────
+function sfMascaraTel(inp){
+  // Preservar prefixo (85)
+  let v=inp.value.replace(/\D/g,'');
+  if(v.length>11)v=v.substring(0,11);
+  let fmt='';
+  if(v.length>0) fmt='('+v.substring(0,2);
+  if(v.length>=2) fmt+=') '+v.substring(2,7);
+  if(v.length>=7) fmt+='-'+v.substring(7,11);
+  inp.value=fmt;
+  // Se apagou tudo, restaurar prefixo
+  if(inp.value.length<5) inp.value='(85) ';
+}
 function sfMascaraHora(inp){
   let v=inp.value.replace(/\D/g,'').substring(0,4);
   if(v.length>=3) v=v.substring(0,2)+':'+v.substring(2);
@@ -10574,7 +10605,7 @@ function sfToggleCamposEnv(sel){
   const isAnimal=val==='ANIMAL';
   const isNaoId=val==='NÃO IDENTIFICADO';
   const isPedestre=val==='PEDESTRE';
-  const isPessoa=!isAnimal&&!isNaoId;
+  const isPessoa=val!==''&&!isAnimal&&!isNaoId;
   const show=(el,vis)=>{if(el){el.style.display=vis?'block':'none';el.classList.toggle('campo-oculto',!vis);}};
   show(item.querySelector('.campos-animal'), isAnimal);
   show(item.querySelector('.campos-pessoa'), isPessoa);
