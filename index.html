@@ -1746,7 +1746,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy);color:var(--t
 // ══════════════════════════════════════════════
 // CONFIGURAÇÃO
 // ══════════════════════════════════════════════
-const APP_VERSION='2026-06-17-v6'; // Via Livre integrado // ← atualize esta string a cada deploy
+const APP_VERSION='2026-06-17-v10'; // Via Livre integrado // ← atualize esta string a cada deploy
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycbwNQg7oS7yITWKweCAqi0XvF8Bgn45ua7a9uVyMjPf95RsD59AQJGMwHYTAjguI-JVs/exec';
 const LS={session:'amc_rel_session',agentes:'agentesPersonalizados',rotas:'rotasPersonalizadas'};
 // Limpar sessão ao detectar nova versão — força re-login em todos os usuários
@@ -10844,15 +10844,15 @@ async function sfGerarPDFDireto(s) {
     orgaos:s.orgaos||{}, condicoesVeic:s.condicoesVeic||{},
     imagens:sfImgs.filter(Boolean)
   };
-  await sfGerarPDFComDados(dados);
+  await sfGerarPDFComDados(dados, false); // false = não perguntar ao fechar
 }
 
 async function sfGerarPDF() {
   const dados=sfColetarDados();
-  await sfGerarPDFComDados(dados);
+  await sfGerarPDFComDados(dados, true); // true = perguntar se quer encerrar
 }
 
-async function sfGerarPDFComDados(dados) {
+async function sfGerarPDFComDados(dados, perguntarFechar=true) {
   if(!dados.logradouro){toast('Preencha ao menos o logradouro antes de gerar o PDF.','err');return;}
   await new Promise(r=>setTimeout(r,100)); // aguardar jsPDF
   let jsPDF_cls;
@@ -10911,7 +10911,7 @@ async function sfGerarPDFComDados(dados) {
 
   // 5a — EPI por envolvido
   const envFiltrados5=(dados.envolvidos||[]).filter(e=>e.vinculo!=='ANIMAL'&&e.vinculo!=='NÃO IDENTIFICADO'&&e.vinculo!=='');
-  function addBloco(titulo){verificar(10);doc.setFillColor(245,245,245);doc.setDrawColor(180,180,180);doc.setLineWidth(0.2);doc.rect(mE,y-4,lMax,8,'FD');doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(80,80,80);doc.text(titulo.toUpperCase(),mE+3,y+1);y+=7;doc.setTextColor(0,0,0);}
+  function addBloco(titulo){y+=2;verificar(12);doc.setFillColor(245,245,245);doc.setDrawColor(180,180,180);doc.setLineWidth(0.2);doc.rect(mE,y-3,lMax,9,'FD');doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(80,80,80);doc.text(titulo.toUpperCase(),mE+3,y+3);y+=11;doc.setTextColor(0,0,0);}
   if(envFiltrados5.length){
     addBloco('5a. Equipamentos de Proteção Individual (EPI)');
     envFiltrados5.forEach((e,idx)=>{
@@ -10929,7 +10929,7 @@ async function sfGerarPDFComDados(dados) {
   // 5b — Pavimento e Calçadas
   addBloco('5b. Pavimento e Calçadas');
   addChecklist([{label:'Vestígios no pavimento',checked:cks.ck_vestigios},{label:'Pavimento irregular/buracos',checked:cks.ck_pavimento_irregular},{label:'Tampas/grelhas ausentes',checked:cks.ck_tampas_grelhas},{label:'Calçada deficiente',checked:cks.ck_calcada_deficiente}]);
-  if(dados.tipoVestigio){addCampo('TIPO DE VESTÍGIO',dados.tipoVestigio+(dados.tipoVestigio==='OUTRO'?': '+dados.vestigioOutro:''));}
+  if(dados.tipoVestigio){addCampo('↳ TIPO DE VESTÍGIO',dados.tipoVestigio+(dados.tipoVestigio==='OUTRO'?': '+dados.vestigioOutro:''),6);}
   if(dados.detPavimento){
     doc.setFont('helvetica','italic');doc.setFontSize(8);doc.setTextColor(120);
     verificar(5);doc.text('Descrição do pavimento:',mE+2,y);y+=4;doc.setTextColor(0,0,0);
@@ -10940,7 +10940,7 @@ async function sfGerarPDFComDados(dados) {
   // 5c — Sinalização
   addBloco('5c. Sinalização');
   addChecklist([{label:'Sinalização deficiente/inexistente',checked:cks.ck_sinalizacao_deficiente},{label:'Falha em semáforo',checked:cks.ck_semaforo_falha},{label:'Sinalização em bom estado',checked:cks.ck_sinalizacao_bom_estado}]);
-  if(cks.ck_sinalizacao_bom_estado&&dados.tipoSinaliz){addCampo('TIPO DE SINALIZAÇÃO',dados.tipoSinaliz);}
+  if(dados.tipoSinaliz){addCampo('↳ TIPO DE SINALIZAÇÃO',dados.tipoSinaliz,6);}
   if(dados.detSin){
     doc.setFont('helvetica','italic');doc.setFontSize(8);doc.setTextColor(120);
     verificar(5);doc.text('Descrição da sinalização:',mE+2,y);y+=4;doc.setTextColor(0,0,0);
@@ -10962,19 +10962,22 @@ async function sfGerarPDFComDados(dados) {
   // 5e — Visibilidade
   addBloco('5e. Visibilidade e Iluminação');
   addChecklist([{label:'Trecho em curva',checked:cks.ck_trecho_curva},{label:'Dificuldade de visibilidade',checked:cks.ck_visibilidade_dificil},{label:'Iluminação deficiente',checked:cks.ck_iluminacao_deficiente}]);
+  y+=2;
+  // 5f — Câmeras (bloco próprio)
+  addBloco('5f. Monitoramento');
   addCampo('CÂMERAS NO LOCAL',dados.cameras+(dados.cameras==='SIM'&&dados.cameraOrigem?' ('+dados.cameraOrigem+')':''));
   y+=2;
 
   // 5f — Condições dos Veículos
   if(Object.keys(dados.condicoesVeic||{}).length&&Object.values(dados.condicoesVeic).some(v=>v)){
-    addBloco('5f. Condições dos Veículos');
+    addBloco('5g. Condições dos Veículos');
     Object.entries(dados.condicoesVeic||{}).forEach(([id,val])=>{if(val)addCampo('VEÍCULO '+id,val);});
     y+=2;
   }
 
   // 5g — Outros Fatores
   if(dados.outrosFatores&&dados.outrosFatores.trim()){
-    addBloco('5g. Outros Fatores');
+    addBloco('5h. Outros Fatores');
     addCaixa(dados.outrosFatores);
   }
   y+=2;
@@ -11003,13 +11006,25 @@ async function sfGerarPDFComDados(dados) {
       if(cnt>=8)break; cnt++;
       verificar(95);
       try{
-        let imgEl;
-        if(imgSrc.startsWith('data:')){imgEl=new Image();imgEl.src=imgSrc;await new Promise(r=>{imgEl.onload=r;imgEl.onerror=r;});}
-        else{imgEl=await loadImg(imgSrc);}
         const iW=140,iH=85;const iX=mE+(lMax-iW)/2;
         doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(127,0,0);
         doc.text('FOTO '+cnt+':',mE,y);y+=4;
-        doc.addImage(imgEl,'JPEG',iX,y,iW,iH);y+=iH+4;
+        if(imgSrc.startsWith('data:')){
+          // Base64: extrair tipo e dados e passar direto ao jsPDF (mais confiável que Image element)
+          const match=imgSrc.match(/^data:image\/([\w]+);base64,(.+)$/);
+          if(match){
+            const fmt=match[1].toUpperCase()==='JPG'?'JPEG':match[1].toUpperCase()==='PNG'?'PNG':'JPEG';
+            doc.addImage(match[2],fmt,iX,y,iW,iH);
+          } else {
+            const imgEl=new Image();imgEl.src=imgSrc;
+            await new Promise(r=>{imgEl.onload=r;imgEl.onerror=r;});
+            doc.addImage(imgEl,'JPEG',iX,y,iW,iH);
+          }
+        } else {
+          const imgEl=await loadImg(imgSrc);
+          doc.addImage(imgEl,'JPEG',iX,y,iW,iH);
+        }
+        y+=iH+4;
       }catch(e){doc.setFont('helvetica','italic');doc.setFontSize(9);doc.setTextColor(150);doc.text('Foto '+cnt+' não disponível.',mE+2,y);y+=8;}
     }
     y+=2;
@@ -11021,12 +11036,13 @@ async function sfGerarPDFComDados(dados) {
   for(let p=1;p<=total;p++){doc.setPage(p);doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(100);doc.text('Página '+p+' de '+total,200-doc.getTextWidth('Página '+p+' de '+total),altPag-2);}
   doc.save(fileName);
   toast('PDF gerado com sucesso!','ok');
-  // Após gerar PDF, perguntar se quer encerrar
-  setTimeout(()=>{
-    if(confirm('PDF gerado! \n\nRelatório concluído? Deseja encerrar o formulário?')){
-      sfFecharModal(true);
-    }
-  },400);
+  if(perguntarFechar){
+    setTimeout(()=>{
+      if(confirm('PDF gerado! \n\nRelatório concluído? Deseja encerrar o formulário?')){
+        sfFecharModal(true);
+      }
+    },400);
+  }
 }
 
 // ── Busca ─────────────────────────────────────────────────────
