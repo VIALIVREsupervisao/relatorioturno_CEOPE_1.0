@@ -1746,7 +1746,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy);color:var(--t
 // ══════════════════════════════════════════════
 // CONFIGURAÇÃO
 // ══════════════════════════════════════════════
-const APP_VERSION='2026-06-17-v15'; // Via Livre integrado // ← atualize esta string a cada deploy
+const APP_VERSION='2026-06-17-v20'; // Via Livre integrado // ← atualize esta string a cada deploy
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycbwNQg7oS7yITWKweCAqi0XvF8Bgn45ua7a9uVyMjPf95RsD59AQJGMwHYTAjguI-JVs/exec';
 const LS={session:'amc_rel_session',agentes:'agentesPersonalizados',rotas:'rotasPersonalizadas'};
 // Limpar sessão ao detectar nova versão — força re-login em todos os usuários
@@ -9780,6 +9780,7 @@ var SF_URL = localStorage.getItem('sfScriptUrl') || 'https://script.google.com/m
 var sfListaData = [];
 var sfCurrentDate = new Date();
 var sfEditandoId = null;
+var sfPdfGerado = false; // rastreia se PDF foi gerado no registro atual
 var sfAutoTimer = null;
 var sfSearchMode = false;
 var sfSearchResults = [];
@@ -9935,7 +9936,10 @@ function sfRenderLista() {
         ${miniImgs.length?`<div style="margin-bottom:10px;"><div style="font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#ef4444;margin-bottom:6px;">Imagens (${miniImgs.length})</div><div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;">${miniImgs.map((u,fi)=>{const thumb=u.includes('drive.google.com/uc')?u.replace('uc?export=view&','thumbnail?').replace(/&sz=\w+/,'')+'&sz=w600':u.includes('drive.google.com/thumbnail')?u:u;return`<div style="flex-shrink:0;cursor:pointer;" onclick="window.open('${u}','_blank')"><img src="${thumb}" style="width:120px;height:90px;object-fit:cover;border-radius:8px;border:2px solid var(--border);display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div style="display:none;width:120px;height:90px;background:var(--surface3);border-radius:8px;border:2px solid var(--border);align-items:center;justify-content:center;flex-direction:column;gap:4px;"><i class='fas fa-image' style='font-size:24px;color:var(--text3);'></i><span style='font-size:9px;color:var(--text3);font-family:Rajdhani,sans-serif;font-weight:700;letter-spacing:1px;'>FOTO ${fi+1}</span></div></div>`;}).join('')}</div></div>`:''}
         <div style="display:flex;gap:6px;flex-wrap:wrap;padding-top:8px;border-top:1px solid var(--border);">
           ${podeEd?`<button onclick="sfAbrirModal('${s.id||''}')" style="flex:1;padding:9px 12px;background:linear-gradient(135deg,#c62828,#7f0000);border:none;border-radius:8px;color:#fff;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;"><i class="fas fa-edit"></i> Editar</button>`:''}
-          <button onclick="sfAbrirLeitura(${i})" style="flex:1;padding:9px 12px;background:rgba(96,165,250,0.12);border:1px solid rgba(96,165,250,0.4);border-radius:8px;color:#60a5fa;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;"><i class="fas fa-file-pdf"></i> PDF</button>
+          <div style="flex:1;position:relative;" class="sf-pdf-card-wrap">
+            <button onclick="sfAbrirLeitura(${i})" style="width:100%;padding:9px 12px;background:rgba(96,165,250,0.12);border:1px solid rgba(96,165,250,0.4);border-radius:8px;color:#60a5fa;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;"><i class="fas fa-file-pdf"></i> PDF ${miniImgs.length?'<span style="font-size:9px;color:#f59e0b;margin-left:4px;" title="Fotos salvas no Drive podem não aparecer no PDF. Para garantir as fotos, gere o PDF logo após o registro.">⚠</span>':''}</button>
+            ${miniImgs.length?`<div style="font-size:9px;color:#f59e0b;text-align:center;margin-top:3px;line-height:1.3;"><i class="fas fa-exclamation-triangle" style="font-size:8px;"></i> Fotos só aparecem no PDF se gerado na hora do registro</div>`:''}
+          </div>
           ${podeEd?`<button onclick="sfExcluir('${s.id||''}')" style="padding:9px 12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;color:#f87171;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:12px;cursor:pointer;"><i class="fas fa-trash"></i></button>`:''}
         </div>
       </div>
@@ -9998,6 +10002,7 @@ function sfAbrirModal(id) {
   document.getElementById('sfBtnPDF').style.display='';
   if(!id){
     sfEditandoId=null;
+    sfPdfGerado=false; // nova ocorrência: PDF ainda não gerado
     document.getElementById('sfModalTit').textContent='⚠ NOVO SINISTRO FATAL';
     sfLimparForm();
   } else {
@@ -10048,7 +10053,19 @@ function sfFecharModal(force=false) {
   if(!force){
     const log=document.getElementById('sfLogradouro')?.value;
     if(log&&log.trim()){
-      if(!confirm('Encerrar o preenchimento? O formulário será fechado.')) return;
+      // Se é registro novo (sfEditandoId tem ID mas pdfGerado=false), avisar sobre PDF
+      const eNovo=document.getElementById('sfModalTit')?.textContent?.includes('NOVO')||
+                  (!sfPdfGerado&&sfEditandoId&&!document.getElementById('sfModalTit')?.textContent?.includes('EDITAR'));
+      const semPdf=!sfPdfGerado&&sfImgs.some(Boolean); // tem imagens mas não gerou PDF
+      const titNovo=document.getElementById('sfModalTit')?.textContent?.includes('NOVO');
+      const temFotos=sfImgs&&sfImgs.some(Boolean);
+      if(!sfPdfGerado&&titNovo&&temFotos){
+        // Registro novo com fotos: avisar que fotos não vão aparecer no PDF gerado depois
+        const resp=confirm('⚠ PDF ainda não foi gerado!\n\nVocê adicionou fotos neste registro. Se fechar agora sem gerar o PDF, as fotos NÃO aparecerao em PDFs gerados posteriormente.\n\nRecomendamos gerar o PDF antes de fechar.\n\nFechar assim mesmo?');
+        if(!resp) return;
+      } else {
+        if(!confirm('Encerrar o preenchimento? O formulário será fechado.')) return;
+      }
     }
   }
   var m=document.getElementById('sfModal');
@@ -10930,7 +10947,7 @@ async function sfGerarPDFComDados(dados, perguntarFechar=true) {
   // 5b — Pavimento e Calçadas
   addBloco('5b. Pavimento e Calçadas');
   addChecklist([{label:'Vestígios no pavimento',checked:cks.ck_vestigios},{label:'Pavimento irregular/buracos',checked:cks.ck_pavimento_irregular},{label:'Tampas/grelhas ausentes',checked:cks.ck_tampas_grelhas},{label:'Calçada deficiente',checked:cks.ck_calcada_deficiente}]);
-  if(dados.tipoVestigio){addCampoSub('TIPO DE VESTÍGIO (vestígios no pavimento)',dados.tipoVestigio+(dados.tipoVestigio==='OUTRO'?': '+dados.vestigioOutro:''),6);}
+  if(dados.tipoVestigio){addCampoSub('TIPO DE VESTÍGIO NO PAVIMENTO',dados.tipoVestigio+(dados.tipoVestigio==='OUTRO'?': '+dados.vestigioOutro:''));}
   if(dados.detPavimento){
     doc.setFont('helvetica','italic');doc.setFontSize(8);doc.setTextColor(120);
     verificar(5);doc.text('Descrição do pavimento:',mE+2,y);y+=4;doc.setTextColor(0,0,0);
@@ -10941,7 +10958,10 @@ async function sfGerarPDFComDados(dados, perguntarFechar=true) {
   // 5c — Sinalização
   addBloco('5c. Sinalização');
   addChecklist([{label:'Sinalização deficiente/inexistente',checked:cks.ck_sinalizacao_deficiente},{label:'Falha em semáforo',checked:cks.ck_semaforo_falha},{label:'Sinalização em bom estado',checked:cks.ck_sinalizacao_bom_estado}]);
-  if(dados.tipoSinaliz){addCampoSub('TIPO DE SINALIZAÇÃO (sinalização)',dados.tipoSinaliz,6);}
+  // Tipo sinaliz deficiente/inexistente: sem sub-campo (só o checklist já diz)
+  // Tipo sinaliz bom estado: aparece como sub-item quando checkbox bom estado marcado
+  if(cks.ck_sinalizacao_bom_estado&&dados.tipoSinaliz){addCampoSub('TIPO DE SINALIZAÇÃO EM BOM ESTADO',dados.tipoSinaliz);}
+  if(!cks.ck_sinalizacao_bom_estado&&dados.tipoSinaliz){addCampoSub('TIPO DE SINALIZAÇÃO DEFICIENTE/INEXISTENTE',dados.tipoSinaliz);}
   if(dados.detSin){
     doc.setFont('helvetica','italic');doc.setFontSize(8);doc.setTextColor(120);
     verificar(5);doc.text('Descrição da sinalização:',mE+2,y);y+=4;doc.setTextColor(0,0,0);
@@ -11069,6 +11089,7 @@ async function sfGerarPDFComDados(dados, perguntarFechar=true) {
   const total=doc.getNumberOfPages();
   for(let p=1;p<=total;p++){doc.setPage(p);doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(100);doc.text('Página '+p+' de '+total,200-doc.getTextWidth('Página '+p+' de '+total),altPag-2);}
   doc.save(fileName);
+  sfPdfGerado=true;
   toast('PDF gerado com sucesso!','ok');
   if(perguntarFechar){
     setTimeout(()=>{
