@@ -1746,7 +1746,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy);color:var(--t
 // ══════════════════════════════════════════════
 // CONFIGURAÇÃO
 // ══════════════════════════════════════════════
-const APP_VERSION='2026-06-17-v20'; // Via Livre integrado // ← atualize esta string a cada deploy
+const APP_VERSION='2026-06-17-v30'; // Via Livre integrado // ← atualize esta string a cada deploy
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycbwNQg7oS7yITWKweCAqi0XvF8Bgn45ua7a9uVyMjPf95RsD59AQJGMwHYTAjguI-JVs/exec';
 const LS={session:'amc_rel_session',agentes:'agentesPersonalizados',rotas:'rotasPersonalizadas'};
 // Limpar sessão ao detectar nova versão — força re-login em todos os usuários
@@ -11015,7 +11015,7 @@ async function sfGerarPDFComDados(dados, perguntarFechar=true) {
   Object.entries(dados.orgaos||{}).forEach(([tipo,arr])=>{if(!arr||!arr.length)return;addSubTit(orgNomes[tipo]||tipo.toUpperCase());arr.forEach(o=>{if(tipo==='pefoce')addCampo('VTR '+(o.vtr||'—'),'PERITO: '+(o.perito||'—')+' | MOTORISTA: '+(o.motorista||'—'));else if(tipo==='samu')addCampo('VTR '+(o.vtr||'—'),'MÉDICO: '+(o.medico||'—')+' | ENF: '+(o.enfermeiro||'—')+' | MOT: '+(o.motorista||'—'));else if(tipo==='rabecao')addCampo('VTR '+(o.vtr||'—'),'MOTORISTA: '+(o.motorista||'—')+' | AUXILIAR: '+(o.auxiliar||'—'));else if(tipo==='outros')addCampo(o.orgao||'—',o.info||'');else addCampo('VTR '+(o.vtr||'—'),o.agentes||o.equipe||'—');});});
   y+=2;
   // 8
-  if(dados.testemunhas&&dados.testemunhas.length){addTit('8. Testemunhas');dados.testemunhas.forEach((t,i)=>{addSubTit('Testemunha '+(i+1));addCampo('NOME',t.nome||'—');if(t.telefone)addCampo('TELEFONE',t.telefone);if(t.declaracao)addCaixa(t.declaracao);});y+=2;}
+  if(dados.testemunhas&&dados.testemunhas.length){addTit('8. Testemunhas');dados.testemunhas.forEach((t,i)=>{addSubTit('Testemunha '+(i+1));addCampo('NOME',t.nome||'—');if(t.telefone)addCampo('TELEFONE',t.telefone);if(t.doc)addCampo('RG/CPF',t.doc);if(t.declaracao)addCaixa(t.declaracao);});y+=2;}
   // 9 Imagens
   const imgsUrl=(dados.imagens||[]).filter(u=>u&&!u.startsWith('data:'));
   const imgsB64=(dados.imagens||[]).filter(u=>u&&u.startsWith('data:'));
