@@ -1746,7 +1746,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy);color:var(--t
 // ══════════════════════════════════════════════
 // CONFIGURAÇÃO
 // ══════════════════════════════════════════════
-const APP_VERSION='2026-06-17-v01'; // Via Livre integrado // ← atualize esta string a cada deploy
+const APP_VERSION='2026-06-17-v2'; // Via Livre integrado // ← atualize esta string a cada deploy
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycbwNQg7oS7yITWKweCAqi0XvF8Bgn45ua7a9uVyMjPf95RsD59AQJGMwHYTAjguI-JVs/exec';
 const LS={session:'amc_rel_session',agentes:'agentesPersonalizados',rotas:'rotasPersonalizadas'};
 // Limpar sessão ao detectar nova versão — força re-login em todos os usuários
@@ -10842,16 +10842,21 @@ async function sfGerarPDF() {
   const urlRod='https://i.imgur.com/9QqgR97.jpg';
   const fileName='Sinistro_Fatal_'+(dados.data||sfIso(new Date())).split('-').reverse().join('_')+'_'+(dados.logradouro||'LOCAL').replace(/\s+/g,'_').substring(0,30)+'.pdf';
   async function loadImg(url){return new Promise((res,rej)=>{const i=new Image();i.crossOrigin='Anonymous';i.onload=()=>res(i);i.onerror=rej;i.src=url;});}
-  async function addCab(){try{const img=await loadImg(urlCab);doc.addImage(img,'JPEG',mE,2,lMax,altCab-2);doc.setFillColor(127,0,0);doc.rect(mE,altCab+1,lMax,9,'F');doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(255,255,255);const t='RELATÓRIO DE SINISTRO FATAL - AMC';doc.text(t,(210-doc.getTextWidth(t))/2,altCab+7);doc.setTextColor(0,0,0);}catch(e){}}
-  async function addRod(){try{const img=await loadImg(urlRod);doc.addImage(img,'JPEG',mE,altPag-altRod,lMax,altRod);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(100);doc.text('Página '+pagAtual,200-doc.getTextWidth('Página '+pagAtual),altPag-2);}catch(e){}}
-  function verificar(h){if(y+h>altPag-altRod-10){addRod();doc.addPage();pagAtual++;addCab();y=altCab+18;}}
+  // Pre-carregar cabecalho e rodape uma vez so para todas as paginas
+  let imgCab=null,imgRod=null;
+  try{imgCab=await loadImg(urlCab);}catch(e){}
+  try{imgRod=await loadImg(urlRod);}catch(e){}
+  function addCab(){if(imgCab){doc.addImage(imgCab,'JPEG',mE,2,lMax,altCab-2);}doc.setFillColor(127,0,0);doc.rect(mE,altCab+1,lMax,9,'F');doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(255,255,255);const t='RELATÓRIO DE SINISTRO FATAL - AMC';doc.text(t,(210-doc.getTextWidth(t))/2,altCab+7);doc.setTextColor(0,0,0);}
+  function addRod(){if(imgRod){doc.addImage(imgRod,'JPEG',mE,altPag-altRod,lMax,altRod);}doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(100);doc.text('Página '+pagAtual,200-doc.getTextWidth('Página '+pagAtual),altPag-2);}
+  function novaPagina(){addRod();doc.addPage();pagAtual++;addCab();y=altCab+18;}
+  function verificar(h){if(y+h>altPag-altRod-10){novaPagina();}}
   function addTit(txt){verificar(12);doc.setFillColor(127,0,0);doc.rect(mE,y-3,lMax,9,'F');doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(255,255,255);doc.text(txt.toUpperCase(),mE+3,y+3);y+=12;doc.setTextColor(0,0,0);}
   function addSubTit(txt){verificar(8);doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(127,0,0);doc.text(txt.toUpperCase(),mE,y);y+=6;doc.setTextColor(0,0,0);}
   function addCampo(rot,val,indent=2){if(!val||!String(val).trim())return;verificar(5);doc.setFontSize(10);doc.setFont('helvetica','bold');const rW=doc.getTextWidth(rot+': ');doc.setTextColor(127,0,0);doc.text(rot+':',mE+indent,y);doc.setFont('helvetica','normal');doc.setTextColor(0,0,0);const ls=doc.splitTextToSize(String(val).toUpperCase(),lMax-rW-indent-2);doc.text(ls,mE+indent+rW,y);y+=Math.max(ls.length,1)*4.5+1;}
   function addCaixa(txt){const t=txt?.trim()?txt.toUpperCase():'NENHUM DADO INFORMADO';const pad=4;const xT=mE+3+pad;const lT=lMax-3-(2*pad)-2;doc.setFont('helvetica','normal');doc.setFontSize(10);const ls=doc.splitTextToSize(t,lT);const eL=5.2;const aT=ls.length*eL;const h=aT+(2*pad)+2;verificar(h+6);doc.setFillColor(248,248,248);doc.setDrawColor(200,200,200);doc.setLineWidth(0.3);doc.roundedRect(mE,y,lMax,h,2,2,'FD');doc.setFillColor(127,0,0);doc.rect(mE,y,3,h,'F');doc.setTextColor(0,0,0);const yB=y+pad+3.5;ls.forEach((l,i)=>doc.text(l,xT,yB+(i*eL)));y+=h+5;}
   function addChecklist(items){const colW=lMax/2;let col=0,maxL=1;doc.setFontSize(10);const its=items.map(it=>({...it,label:it.label.toUpperCase(),linhas:doc.splitTextToSize(it.label.toUpperCase(),colW-12)}));verificar(Math.ceil(its.length/2)*6+4);its.forEach((item,idx)=>{const x=mE+(col*colW);if(item.checked){doc.setFillColor(127,0,0);doc.rect(x,y-3.5,4,4,'F');doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(255,255,255);doc.text('X',x+0.8,y-0.5);}else{doc.setDrawColor(180,180,180);doc.setLineWidth(0.3);doc.rect(x,y-3.5,4,4,'D');}doc.setFontSize(10);doc.setFont('helvetica',item.checked?'bold':'normal');doc.setTextColor(item.checked?40:150,item.checked?10:100,item.checked?10:100);doc.text(item.linhas,x+6,y);maxL=Math.max(maxL,item.linhas.length);col++;if(col>=2){col=0;y+=maxL*5.5+1;maxL=1;}});if(col!==0)y+=maxL*5.5+1;y+=2;}
 
-  await addCab();
+  addCab();
   // 1
   addTit('1. Dados Gerais');
   addCampo('DATA',sfFmtBR(dados.data)); addCampo('HORA',dados.hora); addCampo('TIPO',dados.tipo);
@@ -10870,7 +10875,6 @@ async function sfGerarPDF() {
       addCampo('RG',e.rg||'—');addCampo('CPF',e.cpf||'—');
       if(e.dataNasc)addCampo('NASC.',sfFmtBR(e.dataNasc)+(e.idade?' ('+e.idade+' anos)':''));
       addCampo('CNH',e.cnh||'—');addCampo('CATEGORIA',e.categoria||'—');
-      addCampo('CAPACETE',e.capacete||'N/A');addCampo('CINTO',e.cinto||'N/A');
     } else if(e.vinculo==='ANIMAL'){addCampo('ANIMAL',e.animal||'—');}
     y+=2;verificar(0);
   });
@@ -10878,9 +10882,22 @@ async function sfGerarPDF() {
   addTit('4. Dinâmica do Sinistro'); addCaixa(dados.dinamica); y+=2;
   // 5
   addTit('5. Fatores de Risco');
-  (dados.envolvidos||[]).filter(e=>e.vinculo!=='ANIMAL'&&e.vinculo!=='NÃO IDENTIFICADO').forEach(e=>{
-    if(e.nome||e.vinculo){addSubTit((e.nome||'Envolvido')+(e.vinculo?' — '+e.vinculo:''));addCampo('CAPACETE',e.capacete||'N/A');addCampo('CINTO',e.cinto||'N/A');y+=1;}
-  });
+  // 5a — Fatores por envolvido (capacete/cinto conforme tipo de veiculo)
+  const motoTiposFat=['MOTOCICLETA','QUADRICICLO','BICICLETA'];
+  const envFiltrados5=(dados.envolvidos||[]).filter(e=>e.vinculo!=='ANIMAL'&&e.vinculo!=='NÃO IDENTIFICADO');
+  if(envFiltrados5.length){
+    envFiltrados5.forEach((e,idx)=>{
+      const veicNum=parseInt((e.vinculo||'').replace(/[^0-9]/g,''))||0;
+      const veicTipo5=veicNum?((dados.veiculos||[])[veicNum-1]?.tipo||''):'';
+      const eMoto=motoTiposFat.some(m=>veicTipo5.toUpperCase().includes(m));
+      addSubTit((e.nome||'Envolvido '+(idx+1))+(e.vinculo?' — '+e.vinculo:''));
+      addCampo('CAPACETE',e.capacete||'N/A');
+      if(!eMoto)addCampo('CINTO',e.cinto||'N/A');
+      y+=1;
+    });
+    y+=3;
+  }
+  // 5b — Fatores ambientais
   addSubTit('Pavimento e Calçadas');
   const cks=dados.checkboxes||{};
   addChecklist([{label:'Vestígios no pavimento',checked:cks.ck_vestigios},{label:'Pavimento irregular/buracos',checked:cks.ck_pavimento_irregular},{label:'Tampas/grelhas ausentes',checked:cks.ck_tampas_grelhas},{label:'Calçada deficiente',checked:cks.ck_calcada_deficiente}]);
@@ -10937,7 +10954,7 @@ async function sfGerarPDF() {
   }
   // 10
   addTit('10. Observações'); addCaixa(dados.observacoes);
-  await addRod();
+  addRod();
   const total=doc.getNumberOfPages();
   for(let p=1;p<=total;p++){doc.setPage(p);doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(100);doc.text('Página '+p+' de '+total,200-doc.getTextWidth('Página '+p+' de '+total),altPag-2);}
   doc.save(fileName);
